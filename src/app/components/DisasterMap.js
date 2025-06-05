@@ -1,6 +1,6 @@
 'use client';
 import L from 'leaflet';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Circle, Popup, useMap, Marker, Tooltip } from 'react-leaflet';
 
 // Haversine formula to calculate distance between two points (in kilometers)
@@ -18,7 +18,6 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 
 // Component to handle map centering and zooming
 function MapController({ center, zoom }) {
-  const mapRef = useRef(null);
   const map = useMap();
   useEffect(() => {
     if (map && center && zoom && Array.isArray(center) && center.length === 2) {
@@ -45,9 +44,9 @@ function MapController({ center, zoom }) {
   return null;
 }
 
-export default function DisasterMap({ disasters, showDisasters, onDisasterClick, userLocation }) {
+export default function DisasterMap({ disasters, requests, showDisasters, userLocation, mapRef }) {
   const [selectedDisaster, setSelectedDisaster] = useState(null);
-  const radiusKm = 100; // Radius in kilometers to filter disasters
+  const radiusKm = 100; // Radius in kilometers to filter disasters and requests
 
   // Filter disasters within the specified radius of the user's location
   const nearbyDisasters = userLocation
@@ -70,12 +69,32 @@ export default function DisasterMap({ disasters, showDisasters, onDisasterClick,
     })
     : disasters;
 
+  // Filter requests within the specified radius of the user's location
+  const nearbyRequests = userLocation
+    ? requests.filter((request) => {
+      if (
+        typeof request.latitude !== 'number' ||
+        typeof request.longitude !== 'number' ||
+        !isFinite(request.latitude) ||
+        !isFinite(request.longitude)
+      ) {
+        return false;
+      }
+      const distance = calculateDistance(
+        userLocation.latitude,
+        userLocation.longitude,
+        request.latitude,
+        request.longitude
+      );
+      return distance <= radiusKm;
+    })
+    : requests;
+
   // Set initial map center based on user's location
   const initialCenter = userLocation
     ? [userLocation.latitude, userLocation.longitude]
     : [0, 0];
   const initialZoom = 10; // For ~100km view
-
 
   const handleDisasterClick = (disaster) => {
     if (
@@ -88,28 +107,40 @@ export default function DisasterMap({ disasters, showDisasters, onDisasterClick,
       disaster.longitude >= -180 &&
       disaster.longitude <= 180
     ) {
-      setSelectedDisaster({ center: [disaster.latitude, disaster.longitude], zoom: 10 });
-      onDisasterClick(disaster);
+      setSelectedDisaster({ center: [disaster.latitude, disaster.longitude], zoom: 12 });
     } else {
       console.warn('Invalid coordinates for disaster:', disaster);
+    }
+  };
+
+  const handleRequestClick = (request) => {
+    if (
+      typeof request.latitude === 'number' &&
+      typeof request.longitude === 'number' &&
+      isFinite(request.latitude) &&
+      isFinite(request.longitude) &&
+      request.latitude >= -90 &&
+      request.latitude <= 90 &&
+      request.longitude >= -180 &&
+      request.longitude <= 180
+    ) {
+      setSelectedDisaster({ center: [request.latitude, request.longitude], zoom: 12 });
+    } else {
+      console.warn('Invalid coordinates for request:', request);
     }
   };
 
   return (
     <MapContainer
       center={initialCenter}
-      zoom={10}
-      minZoom={10}
-      maxZoom={18}
-      maxBounds={
-        userLocation
-          ? L.latLng(userLocation.latitude, userLocation.longitude).toBounds(100000) // 100 km
-          : null
-      }
-      maxBoundsViscosity={1.0}
+      zoom={initialZoom}
+      minZoom={3} // Allow zooming out to see larger areas
+      maxZoom={18} // Keep max zoom for detailed view
+      maxBounds={null} // Remove maxBounds to allow free panning
       style={{ height: '100%', width: '100%' }}
       className="rounded-xl shadow-md"
       whenCreated={(map) => {
+        mapRef.current = map; // Assign map instance to mapRef
         map.invalidateSize();
       }}
     >
@@ -137,7 +168,6 @@ export default function DisasterMap({ disasters, showDisasters, onDisasterClick,
       {/* Disaster Areas */}
       {showDisasters &&
         nearbyDisasters.map((disaster, index) => {
-          // Validate coordinates
           if (
             typeof disaster.latitude !== 'number' ||
             typeof disaster.longitude !== 'number' ||
@@ -167,7 +197,7 @@ export default function DisasterMap({ disasters, showDisasters, onDisasterClick,
 
           return (
             <Circle
-              key={index}
+              key={`disaster-${index}`}
               center={[disaster.latitude, disaster.longitude]}
               radius={radius}
               pathOptions={{
@@ -199,6 +229,56 @@ export default function DisasterMap({ disasters, showDisasters, onDisasterClick,
                 </div>
               </Popup>
             </Circle>
+          );
+        })}
+
+      {/* Request Markers */}
+      {showDisasters &&
+        nearbyRequests.map((request, index) => {
+          if (
+            typeof request.latitude !== 'number' ||
+            typeof request.longitude !== 'number' ||
+            !isFinite(request.latitude) ||
+            !isFinite(request.longitude) ||
+            request.latitude < -90 ||
+            request.latitude > 90 ||
+            request.longitude < -180 ||
+            request.longitude > 180
+          ) {
+            console.warn('Skipping request with invalid coordinates:', request);
+            return null;
+          }
+
+          return (
+            <Marker
+              key={`request-${index}`}
+              position={[request.latitude, request.longitude]}
+              eventHandlers={{
+                click: () => handleRequestClick(request),
+              }}
+            >
+              <Popup>
+                <div className="text-center">
+                  <h3 className="font-semibold">{request.name || 'Unnamed Request'}</h3>
+                  <p>Type: {request.type || 'N/A'}</p>
+                  <p>Urgency: {request.urgency || 'N/A'}</p>
+                  <p>Status: {request.status || 'N/A'}</p>
+                  <p>Contact: {request.contact || 'N/A'}</p>
+                  <p>Description: {request.description || 'N/A'}</p>
+                  <p>
+                    Location:{' '}
+                    {typeof request.latitude === 'number' && isFinite(request.latitude)
+                      ? request.latitude.toFixed(2) + '°N'
+                      : 'N/A'}
+                    ,{' '}
+                    {typeof request.longitude === 'number' && isFinite(request.longitude)
+                      ? request.longitude.toFixed(2) + '°E'
+                      : 'N/A'}
+                  </p>
+                  <p>Date: {new Date(request.created_at).toLocaleDateString('en-US') || 'N/A'}</p>
+                </div>
+              </Popup>
+            </Marker>
           );
         })}
     </MapContainer>

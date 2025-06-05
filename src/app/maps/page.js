@@ -1,8 +1,8 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { FiActivity } from 'react-icons/fi';
-import { useState, useEffect } from 'react';
+import { FiActivity, FiZoomIn, FiZoomOut } from 'react-icons/fi';
+import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 
 // Dynamically import DisasterMap to prevent SSR issues
@@ -13,12 +13,14 @@ const DisasterMap = dynamic(() => import('../components/DisasterMap'), {
 
 export default function MapsPage() {
   const [disasters, setDisasters] = useState([]);
+  const [requests, setRequests] = useState([]);
   const [showDisasters, setShowDisasters] = useState(false);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
-  const [userLocation, setUserLocation] = useState(null); // Store user's location
-  const [locationError, setLocationError] = useState(null); // Store geolocation errors
+  const [userLocation, setUserLocation] = useState(null);
+  const [locationError, setLocationError] = useState(null);
+  const mapRef = useRef(null); // Reference to the Leaflet map
 
   // Fetch user's location
   useEffect(() => {
@@ -63,7 +65,6 @@ export default function MapsPage() {
         }
         const data = await response.json();
         const disasterEvents = (data.events || []).reduce((acc, event) => {
-          // Skip events with invalid or missing geometry
           if (
             !event.geometry ||
             !Array.isArray(event.geometry) ||
@@ -80,7 +81,6 @@ export default function MapsPage() {
           const lat = Number(latitude);
           const lon = Number(longitude);
 
-          // Validate coordinates
           if (
             !isFinite(lat) ||
             !isFinite(lon) ||
@@ -94,7 +94,7 @@ export default function MapsPage() {
           }
 
           let severity = 'Low';
-          let category = event.categories?.[0]?.title || 'Unknown';
+          let category = event.categories?.[0]?.title || 'UNKNOWN';
           if (['Severe Storms', 'Floods'].includes(category)) {
             severity = 'High';
           } else if (['Wildfires', 'Volcanoes'].includes(category)) {
@@ -133,31 +133,37 @@ export default function MapsPage() {
     fetchDisasterData();
   }, []);
 
-  const handleDisasterClick = (disaster) => {
-  if (
-    typeof disaster.latitude === 'number' &&
-    typeof disaster.longitude === 'number' &&
-    isFinite(disaster.latitude) &&
-    isFinite(disaster.longitude) &&
-    disaster.latitude >= -90 &&
-    disaster.latitude <= 90 &&
-    disaster.longitude >= -180 &&
-    disaster.longitude <= 180
-  ) {
-    setSelectedDisaster({ center: [disaster.latitude, disaster.longitude], zoom: 10 });
-    onDisasterClick(disaster);
+  // Fetch requests from Neon DB API
+  useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        const response = await fetch('/api/requests');
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const data = await response.json();
+        setRequests(data);
+      } catch (error) {
+        console.error('Error fetching requests:', error);
+        setError(`Failed to fetch requests: ${error.message}. Please try again later.`);
+      }
+    };
 
-    // Directly update the map's view
+    fetchRequests();
+  }, []);
+
+  // Zoom in and out handlers
+  const handleZoomIn = () => {
     if (mapRef.current) {
-      mapRef.current.setView([disaster.latitude, disaster.longitude], 10, {
-        animate: true,
-      });
+      mapRef.current.zoomIn();
     }
-  } else {
-    console.warn('Invalid coordinates for disaster:', disaster);
-  }
-};
+  };
 
+  const handleZoomOut = () => {
+    if (mapRef.current) {
+      mapRef.current.zoomOut();
+    }
+  };
 
   return (
     <div className="flex flex-col items-center min-h-screen p-4">
@@ -169,9 +175,9 @@ export default function MapsPage() {
       >
         <FiActivity size={40} className="text-white" />
       </motion.div>
-      <h2 className="text-3xl font-bold text-gray-800 mb-4">Local Disaster Map</h2>
+      <h2 className="text-3xl font-bold text-gray-800 mb-4">Local Disaster and Request Map</h2>
       <p className="text-gray-600 max-w-md text-center mb-8">
-        Real-time visualization of ongoing disaster events near your location as of 11:49 AM IST on Saturday, May 31, 2025. Explore the map to see affected areas within 100 km.
+        Real-time visualization of ongoing disaster events and pending/emergency requests near your location as of 08:17 PM IST on Tuesday, June 03, 2025. Explore the map to see affected areas and requests within 100 km. Use the zoom buttons to adjust the view.
       </p>
 
       {/* Location Error Message */}
@@ -203,9 +209,10 @@ export default function MapsPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
         >
-          {isLoading ? 'Loading disaster data...' : 'Loading map...'}
+          {isLoading ? 'Loading disaster and request data...' : 'Loading map...'}
         </motion.div>
       )}
+
 
       {/* Leaflet Map */}
       <motion.div
@@ -217,13 +224,14 @@ export default function MapsPage() {
       >
         <DisasterMap
           disasters={disasters}
+          requests={requests}
           showDisasters={showDisasters}
-          onDisasterClick={handleDisasterClick}
           userLocation={userLocation}
+          mapRef={mapRef} // Pass mapRef to DisasterMap
         />
       </motion.div>
 
-      {/* Legend for Severity */}
+      {/* Legend for Severity and Requests */}
       <motion.div
         className="flex justify-center gap-4 mb-8"
         initial={{ opacity: 0, y: 20 }}
@@ -232,15 +240,19 @@ export default function MapsPage() {
       >
         <div className="flex items-center">
           <div className="w-4 h-4 bg-red-500 rounded-full mr-2"></div>
-          <span className="text-gray-600">High Severity</span>
+          <span className="text-gray-600">High Severity Disaster</span>
         </div>
         <div className="flex items-center">
           <div className="w-4 h-4 bg-yellow-500 rounded-full mr-2"></div>
-          <span className="text-gray-600">Medium Severity</span>
+          <span className="text-gray-600">Medium Severity Disaster</span>
         </div>
         <div className="flex items-center">
           <div className="w-4 h-4 bg-green-500 rounded-full mr-2"></div>
-          <span className="text-gray-600">Low Severity</span>
+          <span className="text-gray-600">Low Severity Disaster</span>
+        </div>
+        <div className="flex items-center">
+          <div className="w-4 h-4 bg-blue-500 rounded-full mr-2"></div>
+          <span className="text-gray-600">Pending/Emergency Request</span>
         </div>
       </motion.div>
 
@@ -256,7 +268,7 @@ export default function MapsPage() {
           className="py-3 px-6 bg-gradient-to-r from-blue-600 to-teal-600 text-white rounded-xl shadow-md"
           onClick={() => setShowDisasters(!showDisasters)}
         >
-          {showDisasters ? 'Hide Nearby Disasters' : 'View Nearby Disasters'}
+          {showDisasters ? 'Hide Nearby Disasters and Requests' : 'View Nearby Disasters and Requests'}
         </motion.button>
       </motion.div>
     </div>
