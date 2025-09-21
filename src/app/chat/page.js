@@ -11,24 +11,27 @@ export default function LiveChatPage() {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [groups, setGroups] = useState([]);
-  const [currentGroup, setCurrentGroup] = useState(null); // Will be set to city group
+  const [currentGroup, setCurrentGroup] = useState(null);
   const [users, setUsers] = useState([]);
   const [newGroupName, setNewGroupName] = useState('');
   const [ws, setWs] = useState(null);
-  const [username, setUsername] = useState('');
+  const [username, setUsername] = useState(localStorage.getItem('username') || '');
+  const [isLoading, setIsLoading] = useState(true);
   const messagesEndRef = useRef(null);
+  const reconnectTimeout = useRef(null);
 
-
+  // Set username on first mount only
   useEffect(() => {
-    let user = prompt('Enter your username:') || `User${Math.floor(Math.random() * 1000)}`;
-    localStorage.setItem('username', user);
-    setUsername(user);
-}, []);
+    if (!username) {
+      const user = prompt('Enter your username:') || `User${Math.floor(Math.random() * 1000)}`;
+      localStorage.setItem('username', user);
+      setUsername(user);
+    }
+    setIsLoading(false); // Username setup is quick, so loading can end here
+  }, [username]);
 
-  // Request geolocation permission and initialize WebSocket
+  // Request geolocation and initialize WebSocket
   useEffect(() => {
-
-    // Request geolocation permission
     if (!permissionRequested) {
       setPermissionRequested(true);
       if (navigator.geolocation) {
@@ -37,90 +40,125 @@ export default function LiveChatPage() {
             const { latitude, longitude } = position.coords;
             const city = getNearestCity(latitude, longitude);
             setUserLocation({ city, lat: latitude, lon: longitude });
+            setIsLoading(false);
           },
           (err) => {
             console.error('Geolocation error:', err);
             alert('Unable to access your location. Defaulting to "Unknown" city.');
             setUserLocation({ city: 'Unknown', lat: 0, lon: 0 });
+            setIsLoading(false);
           },
           { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
         );
       } else {
         alert('Geolocation is not supported by your browser. Defaulting to "Unknown" city.');
         setUserLocation({ city: 'Unknown', lat: 0, lon: 0 });
+        setIsLoading(false);
       }
     }
 
-    // Initialize WebSocket
-    const websocket = new WebSocket('ws://localhost:8080');
-    setWs(websocket);
+    // Initialize or reconnect WebSocket
+    const initializeWebSocket = () => {
+      if (!ws) {
+        const websocket = new WebSocket('ws://localhost:8080');
+        setWs(websocket);
 
-    websocket.onopen = () => {
-      console.log('WebSocket connected');
-    };
+        websocket.onopen = () => {
+          console.log('WebSocket connected');
+          setIsLoading(false); // End loading when connected
+        };
 
-    websocket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === 'message') {
-        setMessages((prev) => [...prev, data]);
-      } else if (data.type === 'users') {
-        setUsers(data.users);
-      } else if (data.type === 'groups') {
-        setGroups(data.groups);
+        websocket.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.type === 'message') {
+              setMessages((prev) => [...prev, data]);
+            } else if (data.type === 'users') {
+              setUsers(data.users || []);
+            } else if (data.type === 'groups') {
+              setGroups(data.groups || []);
+            }
+          } catch (error) {
+            console.error('Error parsing WebSocket message:', error);
+          }
+        };
+
+        websocket.onclose = () => {
+          console.log('WebSocket disconnected');
+          setWs(null);
+          // Attempt to reconnect
+          if (!reconnectTimeout.current) {
+            reconnectTimeout.current = setTimeout(() => {
+              initializeWebSocket();
+              reconnectTimeout.current = null;
+            }, 2000); // Retry after 2 seconds
+          }
+        };
+
+        websocket.onerror = (error) => {
+          console.error('WebSocket error:', error);
+        };
       }
     };
 
-    websocket.onclose = () => {
-      console.log('WebSocket disconnected');
-    };
+    initializeWebSocket();
 
     return () => {
-      websocket.close();
+      if (ws) {
+        ws.close();
+      }
+      if (reconnectTimeout.current) {
+        clearTimeout(reconnectTimeout.current);
+      }
     };
-  }, [permissionRequested]);
+  }, [permissionRequested, ws]);
 
-  // When userLocation is set, create/join the default city group
+  // Handle group creation and joining when location and WebSocket are ready
   useEffect(() => {
-    if (ws && ws.readyState === WebSocket.OPEN && userLocation.city) {
+    if (ws && ws.readyState === WebSocket.OPEN && userLocation.city && !currentGroup) {
       const defaultGroup = `${userLocation.city} Group`;
       setCurrentGroup(defaultGroup);
 
-      // Create the default group if it doesn't exist
-      ws.send(JSON.stringify({
+      const createGroupMessage = {
         type: 'createGroup',
         groupName: defaultGroup,
         username,
         city: userLocation.city,
-      }));
+      };
+      ws.send(JSON.stringify(createGroupMessage));
 
-      // Join the default group
-      ws.send(JSON.stringify({
+      const joinGroupMessage = {
         type: 'join',
         username,
         city: userLocation.city,
         group: defaultGroup,
-      }));
+      };
+      ws.send(JSON.stringify(joinGroupMessage));
     }
-  }, [userLocation.city, ws, username]);
+  }, [userLocation.city, ws, username, currentGroup]);
 
   // Scroll to the latest message
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Send a message
+  // Send a message with reconnection check
   const sendMessage = () => {
-    if (newMessage.trim() && ws && ws.readyState === WebSocket.OPEN) {
-      const message = {
-        type: 'message',
-        username,
-        text: newMessage,
-        city: userLocation.city,
-        group: currentGroup,
-        timestamp: new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata' }),
-      };
-      ws.send(JSON.stringify(message));
-      setNewMessage('');
+    if (newMessage.trim() && ws) {
+      if (ws.readyState === WebSocket.OPEN) {
+        const message = {
+          type: 'message',
+          username,
+          text: newMessage,
+          city: userLocation.city,
+          group: currentGroup,
+          timestamp: new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }), // Include date
+        };
+        ws.send(JSON.stringify(message));
+        setNewMessage('');
+      } else {
+        alert('WebSocket is not connected. Please try again.');
+      }
     }
   };
 
@@ -135,6 +173,8 @@ export default function LiveChatPage() {
       };
       ws.send(JSON.stringify(groupMessage));
       setNewGroupName('');
+    } else if (ws && ws.readyState !== WebSocket.OPEN) {
+      alert('WebSocket is not connected. Cannot create group.');
     }
   };
 
@@ -149,8 +189,18 @@ export default function LiveChatPage() {
         group: groupName,
       }));
       setMessages([]); // Clear messages when switching groups
+    } else {
+      alert('WebSocket is not connected. Cannot join group.');
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-gray-600">Loading chat...</p>
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -183,12 +233,14 @@ export default function LiveChatPage() {
             className="flex-1 px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
             value={newGroupName}
             onChange={(e) => setNewGroupName(e.target.value)}
+            disabled={!ws || ws.readyState !== WebSocket.OPEN}
           />
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className="ml-2 px-4 py-2 bg-blue-600 text-white rounded-xl flex items-center"
             onClick={createGroup}
+            disabled={!ws || ws.readyState !== WebSocket.OPEN}
           >
             <FiPlus className="mr-2" />
             Create Group
@@ -206,6 +258,7 @@ export default function LiveChatPage() {
                   : 'bg-gray-200 text-gray-700'
               }`}
               onClick={() => joinGroup(group)}
+              disabled={!ws || ws.readyState !== WebSocket.OPEN}
             >
               {group}
             </motion.button>
@@ -265,12 +318,14 @@ export default function LiveChatPage() {
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+            disabled={!ws || ws.readyState !== WebSocket.OPEN}
           />
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className="ml-2 px-4 py-2 bg-blue-600 text-white rounded-xl flex items-center"
             onClick={sendMessage}
+            disabled={!ws || ws.readyState !== WebSocket.OPEN}
           >
             <FiSend />
           </motion.button>
