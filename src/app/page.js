@@ -6,6 +6,8 @@ import { useState, useEffect } from 'react';
 export default function HomePage() {
   const [isHovered, setIsHovered] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [currentDateTime, setCurrentDateTime] = useState(new Date());
+  const [isMounted, setIsMounted] = useState(false);
   const [stats, setStats] = useState({
     users: 0,
     rescues: 0,
@@ -29,6 +31,15 @@ export default function HomePage() {
     }, 5000);
     return () => clearInterval(interval);
   }, [disasterImages.length]);
+
+  // Update current date and time every second (client-side only)
+  useEffect(() => {
+    setIsMounted(true);
+    const timer = setInterval(() => {
+      setCurrentDateTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Initialize stats with animation
   useEffect(() => {
@@ -461,7 +472,19 @@ export default function HomePage() {
       >
         <div className="max-w-6xl mx-auto">
           <p>© 2025 Disaster Crisis Response Platform. All rights reserved.</p>
-          <p className="mt-2 text-sm">Last updated: 09:25 PM IST on Friday, May 30, 2025</p>
+          <p className="mt-2 text-sm">
+            {isMounted ? `Last updated: ${currentDateTime.toLocaleTimeString('en-IN', { 
+              hour: '2-digit', 
+              minute: '2-digit',
+              second: '2-digit',
+              hour12: true 
+            })} IST on ${currentDateTime.toLocaleDateString('en-US', { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            })}` : 'Loading...'}
+          </p>
           <p className="mt-2 text-sm">Built with ❤ to help communities in need</p>
           <div className="mt-4 flex justify-center space-x-6">
             <a href="#" className="text-gray-500 hover:text-blue-600">

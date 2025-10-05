@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Tester</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        button {
+            background: #0070f3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #0051cc;
+        }
+        pre {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        h2 {
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Volunteer API Tester</h1>
+    
+    <div class="container">
+        <h2>1. Test Database Structure</h2>
+        <button onclick="testDatabase()">Test Database</button>
+        <div id="dbStatus"></div>
+        <pre id="dbResult"></pre>
+    </div>
+
+    <div class="container">
+        <h2>2. Test Volunteers API</h2>
+        <button onclick="testVolunteersAPI()">Get Volunteers</button>
+        <div id="volunteersStatus"></div>
+        <pre id="volunteersResult"></pre>
+    </div>
+
+    <div class="container">
+        <h2>3. Test Location Update</h2>
+        <p><strong>Token:</strong></p>
+        <input type="text" id="token" placeholder="Paste JWT token here" style="width: 100%; padding: 8px; margin-bottom: 10px;">
+        <button onclick="testLocationUpdate()">Update Location</button>
+        <div id="locationStatus"></div>
+        <pre id="locationResult"></pre>
+    </div>
+
+    <script>
+        async function testDatabase() {
+            const status = document.getElementById('dbStatus');
+            const result = document.getElementById('dbResult');
+            
+            status.innerHTML = '<div class="status info">Testing database...</div>';
+            result.textContent = '';
+            
+            try {
+                const response = await fetch('/api/test-db');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    status.innerHTML = '<div class="status success">✓ Database test successful!</div>';
+                    
+                    // Check for lat/long columns
+                    const hasLat = data.columns.some(col => col.column_name === 'lat');
+                    const hasLong = data.columns.some(col => col.column_name === 'long');
+                    
+                    let summary = `
+Columns found: ${data.columns.length}
+Location columns: lat=${hasLat}, long=${hasLong}
+Volunteers: ${data.volunteers.length}
+Volunteers with location: ${data.volunteers.filter(v => v.lat && v.long).length}
+`;
+                    
+                    result.textContent = summary + '\n\nFull Response:\n' + JSON.stringify(data, null, 2);
+                } else {
+                    status.innerHTML = '<div class="status error">✗ Database test failed</div>';
+                    result.textContent = JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                status.innerHTML = '<div class="status error">✗ Error: ' + error.message + '</div>';
+                result.textContent = error.stack;
+            }
+        }
+
+        async function testVolunteersAPI() {
+            const status = document.getElementById('volunteersStatus');
+            const result = document.getElementById('volunteersResult');
+            
+            status.innerHTML = '<div class="status info">Fetching volunteers...</div>';
+            result.textContent = '';
+            
+            try {
+                console.log('Fetching from /api/volunteers...');
+                const response = await fetch('/api/volunteers', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+                
+                const data = await response.json();
+                console.log('Response data:', data);
+                
+                if (response.ok) {
+                    const count = Array.isArray(data) ? data.length : 0;
+                    status.innerHTML = `<div class="status success">✓ API working! Found ${count} volunteers with locations</div>`;
+                    
+                    if (count === 0) {
+                        result.textContent = 'No volunteers with location data.\n\nTo add location data:\n1. Go to /login\n2. Click "Get Current Location"\n3. Login as volunteer\n\nOr update database directly:\nUPDATE volunteers SET lat=17.7514, long=75.9695 WHERE id=YOUR_ID;';
+                    } else {
+                        result.textContent = JSON.stringify(data, null, 2);
+                    }
+                } else {
+                    status.innerHTML = '<div class="status error">✗ API returned error</div>';
+                    result.textContent = 'Status: ' + response.status + '\n\n' + JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                status.innerHTML = '<div class="status error">✗ Fetch failed: ' + error.message + '</div>';
+                result.textContent = 'Error details:\n' + error.stack;
+                console.error('Full error:', error);
+            }
+        }
+
+        async function testLocationUpdate() {
+            const status = document.getElementById('locationStatus');
+            const result = document.getElementById('locationResult');
+            const token = document.getElementById('token').value;
+            
+            if (!token) {
+                status.innerHTML = '<div class="status error">Please enter a JWT token</div>';
+                return;
+            }
+            
+            status.innerHTML = '<div class="status info">Getting your location...</div>';
+            result.textContent = '';
+            
+            try {
+                // Get current location
+                const position = await new Promise((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(resolve, reject, {
+                        enableHighAccuracy: true,
+                        timeout: 10000
+                    });
+                });
+                
+                const latitude = position.coords.latitude;
+                const longitude = position.coords.longitude;
+                
+                status.innerHTML = `<div class="status info">Sending location (${latitude.toFixed(4)}, ${longitude.toFixed(4)}) to server...</div>`;
+                
+                const response = await fetch('/api/staff/update-location', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ latitude, longitude })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    status.innerHTML = '<div class="status success">✓ Location updated successfully!</div>';
+                    result.textContent = JSON.stringify(data, null, 2);
+                } else {
+                    status.innerHTML = '<div class="status error">✗ Failed to update location</div>';
+                    result.textContent = 'Status: ' + response.status + '\n\n' + JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                status.innerHTML = '<div class="status error">✗ Error: ' + error.message + '</div>';
+                result.textContent = error.stack;
+            }
+        }
+
+        // Run database test on load
+        window.addEventListener('load', () => {
+            console.log('API Tester loaded');
+            testDatabase();
+        });
+    </script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FiUser, FiLock, FiMail, FiPhone, FiAlertCircle, FiEye, FiEyeOff } from 'react-icons/fi';
 
@@ -13,6 +13,8 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loginMethod, setLoginMethod] = useState('email'); // 'email' or 'phone'
+  const [currentDateTime, setCurrentDateTime] = useState(new Date());
+  const [isMounted, setIsMounted] = useState(false);
 
   // Validation functions
   const validateEmail = (email) => {
@@ -37,6 +39,15 @@ export default function LoginPage() {
     if (!password) return 'Password is required';
     return '';
   };
+
+  // Update current date and time every second (client-side only)
+  useEffect(() => {
+    setIsMounted(true);
+    const timer = setInterval(() => {
+      setCurrentDateTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -134,7 +145,16 @@ export default function LoginPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.5 }}
           >
-            Sign in to your Disaster Response account as of 11:29 AM IST on Saturday, May 31, 2025.
+            Sign in to your Disaster Response account{isMounted && ` as of ${currentDateTime.toLocaleTimeString('en-IN', { 
+              hour: '2-digit', 
+              minute: '2-digit',
+              hour12: true 
+            })} IST on ${currentDateTime.toLocaleDateString('en-US', { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            })}`}.
           </motion.p>
         </div>
 
@@ -303,7 +323,19 @@ export default function LoginPage() {
         >
           <div className="max-w-7xl mx-auto">
             <p>© 2025 Disaster Crisis Response Platform. All rights reserved.</p>
-            <p className="mt-2 text-sm">Last updated: 11:29 AM IST on Saturday, May 31, 2025</p>
+            <p className="mt-2 text-sm">
+              {isMounted ? `Last updated: ${currentDateTime.toLocaleTimeString('en-IN', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true 
+              })} IST on ${currentDateTime.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}` : 'Loading...'}
+            </p>
             <p className="mt-2 text-sm">Built with ❤ to help communities in need</p>
           </div>
         </motion.footer>

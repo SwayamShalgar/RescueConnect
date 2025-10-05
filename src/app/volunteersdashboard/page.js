@@ -4,20 +4,26 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FiAlertTriangle } from 'react-icons/fi';
 import { jwtDecode } from 'jwt-decode';
+import { useRouter } from 'next/navigation';
 
 export default function VolunteersDashboard() {
+  const router = useRouter();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [volunteerId, setVolunteerId] = useState(null);
+  const [currentDateTime, setCurrentDateTime] = useState(new Date());
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem('token');
         if (!token) {
-          throw new Error('No authentication token found. Please log in.');
+          // Redirect to login instead of throwing error
+          router.push('/login');
+          return;
         }
 
         const decoded = jwtDecode(token);
@@ -50,13 +56,67 @@ export default function VolunteersDashboard() {
     };
 
     fetchData();
+  }, [router]);
+
+  // Update current date and time every second (client-side only)
+  useEffect(() => {
+    setIsMounted(true);
+    const timer = setInterval(() => {
+      setCurrentDateTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
   }, []);
+
+  // Update volunteer location periodically
+  useEffect(() => {
+    const updateLocation = async () => {
+      if (navigator.geolocation && volunteerId) {
+        try {
+          const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true,
+              timeout: 10000,
+              maximumAge: 60000 // Cache for 1 minute
+            });
+          });
+          
+          const latitude = position.coords.latitude;
+          const longitude = position.coords.longitude;
+          
+          const token = localStorage.getItem('token');
+          if (token) {
+            // Update location on server
+            await fetch('/api/staff/update-location', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+              },
+              body: JSON.stringify({ latitude, longitude })
+            });
+            console.log('Location updated:', latitude, longitude);
+          }
+        } catch (error) {
+          console.warn('Could not update location:', error.message);
+        }
+      }
+    };
+
+    // Update location immediately
+    updateLocation();
+
+    // Update location every 5 minutes
+    const locationTimer = setInterval(updateLocation, 5 * 60 * 1000);
+
+    return () => clearInterval(locationTimer);
+  }, [volunteerId]);
 
   const handleAcceptRequest = async (requestId) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        throw new Error('No authentication token found. Please log in.');
+        router.push('/login');
+        return;
       }
 
       const response = await fetch(`/api/staff/volunteersdashboard`, {
@@ -91,7 +151,8 @@ export default function VolunteersDashboard() {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        throw new Error('No authentication token found. Please log in.');
+        router.push('/login');
+        return;
       }
 
       const response = await fetch(`/api/staff/volunteersdashboard`, {
@@ -126,7 +187,8 @@ export default function VolunteersDashboard() {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        throw new Error('No authentication token found. Please log in.');
+        router.push('/login');
+        return;
       }
 
       const response = await fetch(`/api/staff/volunteersdashboard`, {
@@ -263,11 +325,13 @@ export default function VolunteersDashboard() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          request.urgency === 'High'
-                            ? 'bg-red-100 text-red-800'
+                          request.urgency === 'Critical'
+                            ? 'bg-red-600 text-white'
+                            : request.urgency === 'High'
+                            ? 'bg-red-400 text-white'
                             : request.urgency === 'Medium'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-green-100 text-green-800'
+                            ? 'bg-yellow-400 text-gray-900'
+                            : 'bg-green-500 text-white'
                         }`}
                       >
                         {request.urgency}
@@ -277,11 +341,9 @@ export default function VolunteersDashboard() {
                       {request.description}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <a
-                        href={`https://www.google.com/maps?q=${request.latitude},${request.longitude}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-800 flex items-center"
+                      <button
+                        onClick={() => router.push(`/victimmap?lat=${request.latitude}&lng=${request.longitude}&id=${request.id}`)}
+                        className="text-blue-600 hover:text-blue-800 flex items-center transition-colors"
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -304,7 +366,7 @@ export default function VolunteersDashboard() {
                           />
                         </svg>
                         View on Map
-                      </a>
+                      </button>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <span
@@ -391,7 +453,19 @@ export default function VolunteersDashboard() {
       >
         <div className="max-w-7xl mx-auto">
           <p>© 2025 Disaster Crisis Response Platform. All rights reserved.</p>
-          <p className="mt-2 text-sm">Last updated: 08:29 AM IST on Saturday, May 31, 2025</p>
+          <p className="mt-2 text-sm">
+            {isMounted ? `Last updated: ${currentDateTime.toLocaleTimeString('en-IN', { 
+              hour: '2-digit', 
+              minute: '2-digit',
+              second: '2-digit',
+              hour12: true 
+            })} IST on ${currentDateTime.toLocaleDateString('en-US', { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            })}` : 'Loading...'}
+          </p>
           <p className="mt-2 text-sm">Built with ❤ to help communities in need</p>
         </div>
       </motion.footer>

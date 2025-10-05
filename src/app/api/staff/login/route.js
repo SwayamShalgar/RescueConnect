@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import pool from "../../../../../lib/db";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this-in-production";
 
 export async function POST(req) {
   let body;
@@ -11,7 +14,7 @@ export async function POST(req) {
     return NextResponse.json({ message: "Invalid JSON in request body." }, { status: 400 });
   }
 
-  const { contact, password } = body;
+  const { contact, password, latitude, longitude } = body;
 
   // Validate required fields
   if (!contact || !password) {
@@ -43,12 +46,68 @@ export async function POST(req) {
       return NextResponse.json({ message: "Invalid credentials." }, { status: 401 });
     }
 
+    // Update volunteer's location if provided
+    if (latitude && longitude && !isNaN(latitude) && !isNaN(longitude)) {
+      try {
+        // Check which optional columns exist
+        const checkColumnsQuery = `
+          SELECT column_name 
+          FROM information_schema.columns 
+          WHERE table_name = 'volunteers' 
+          AND column_name IN ('status', 'last_login')
+        `;
+        const columnCheck = await client.query(checkColumnsQuery);
+        const existingColumns = columnCheck.rows.map(row => row.column_name);
+        const hasStatusColumn = existingColumns.includes('status');
+        const hasLastLoginColumn = existingColumns.includes('last_login');
+
+        // Build UPDATE query dynamically
+        let updateFields = 'lat = $1, long = $2';
+        
+        if (hasStatusColumn) {
+          updateFields += ", status = 'available'";
+        }
+        
+        if (hasLastLoginColumn) {
+          updateFields += ', last_login = NOW()';
+        }
+        
+        const updateLocationQuery = `
+          UPDATE volunteers 
+          SET ${updateFields}
+          WHERE id = $3
+        `;
+        
+        await client.query(updateLocationQuery, [latitude, longitude, volunteer.id]);
+        console.log('Location updated successfully:', latitude, longitude);
+      } catch (locationError) {
+        console.error('Failed to update location:', locationError.message);
+        // Continue with login even if location update fails
+      }
+    }
+
     client.release();
 
-    // Return success response with volunteer details (excluding password)
+    // Generate JWT token
+    const token = jwt.sign(
+      { 
+        id: volunteer.id, 
+        name: volunteer.name,
+        contact: volunteer.contact,
+        role: 'volunteer'
+      },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    // Return success response with token and volunteer details (excluding password)
     const { password: _, ...volunteerWithoutPassword } = volunteer;
     return NextResponse.json(
-      { message: "Login successful.", volunteer: volunteerWithoutPassword },
+      { 
+        message: "Login successful.", 
+        token,
+        volunteer: volunteerWithoutPassword 
+      },
       { status: 200 }
     );
 

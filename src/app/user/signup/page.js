@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FiUser, FiMail, FiPhone, FiLock, FiEye, FiEyeOff, FiArrowRight, FiRefreshCw } from 'react-icons/fi';
 
@@ -16,6 +16,8 @@ export default function SignupPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [activeStep, setActiveStep] = useState(1);
     const [contactMethod, setContactMethod] = useState('email');
+    const [currentDateTime, setCurrentDateTime] = useState(new Date());
+    const [isMounted, setIsMounted] = useState(false);
 
     // CAPTCHA states
     const [captchaNum1, setCaptchaNum1] = useState(Math.floor(Math.random() * 10));
@@ -77,6 +79,15 @@ export default function SignupPage() {
         setCaptchaAnswer('');
         setCaptchaError('');
     };
+
+    // Update current date and time every second (client-side only)
+    useEffect(() => {
+        setIsMounted(true);
+        const timer = setInterval(() => {
+            setCurrentDateTime(new Date());
+        }, 1000);
+        return () => clearInterval(timer);
+    }, []);
 
     const resetForm = () => {
         setName('');
@@ -256,7 +267,16 @@ export default function SignupPage() {
                             animate={{ opacity: 1 }}
                             transition={{ delay: 0.4 }}
                         >
-                            Sign up to access support and resources as of 11:25 AM IST on Saturday, May 31, 2025.
+                            Sign up to access support and resources{isMounted && ` as of ${currentDateTime.toLocaleTimeString('en-IN', { 
+                                hour: '2-digit', 
+                                minute: '2-digit',
+                                hour12: true 
+                            })} IST on ${currentDateTime.toLocaleDateString('en-US', { 
+                                weekday: 'long', 
+                                year: 'numeric', 
+                                month: 'long', 
+                                day: 'numeric' 
+                            })}`}.
                         </motion.p>
                     </div>
 
@@ -593,7 +613,19 @@ export default function SignupPage() {
                 >
                     <div className="max-w-7xl mx-auto">
                         <p>© 2025 Disaster Crisis Response Platform. All rights reserved.</p>
-                        <p className="mt-2 text-sm">Last updated: 11:25 AM IST on Saturday, May 31, 2025</p>
+                        <p className="mt-2 text-sm">
+                            {isMounted ? `Last updated: ${currentDateTime.toLocaleTimeString('en-IN', { 
+                                hour: '2-digit', 
+                                minute: '2-digit',
+                                second: '2-digit',
+                                hour12: true 
+                            })} IST on ${currentDateTime.toLocaleDateString('en-US', { 
+                                weekday: 'long', 
+                                year: 'numeric', 
+                                month: 'long', 
+                                day: 'numeric' 
+                            })}` : 'Loading...'}
+                        </p>
                         <p className="mt-2 text-sm">Built with ❤ to help communities in need</p>
                     </div>
                 </motion.footer>

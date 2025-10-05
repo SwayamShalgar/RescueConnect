@@ -17,6 +17,7 @@
     "jsonwebtoken": "^9.0.2",
     "jwt-decode": "^4.0.0",
     "leaflet": "^1.9.4",
+    "leaflet-routing-machine": "^3.2.12",
     "libphonenumber-js": "^1.12.8",
     "next": "^15.3.3",
     "nodemailer": "^7.0.3",

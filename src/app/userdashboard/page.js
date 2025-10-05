@@ -445,13 +445,27 @@ function RequestPage() {
             <h1 className="text-2xl font-bold">Submit a Request</h1>
           </motion.div>
           <motion.p
-            className="text-center text-blue-100 max-w-xl mx-auto"
+            className="text-center text-blue-100 max-w-xl mx-auto mb-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
           >
             Request assistance for disaster response as of {getCurrentTime()}. Fill in the details below to get help.
           </motion.p>
+          <motion.div
+            className="flex justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+          >
+            <button
+              onClick={() => router.push('/volunteermap')}
+              className="flex items-center px-6 py-2.5 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-medium rounded-full transition-all shadow-lg hover:shadow-xl"
+            >
+              <FiMapPin className="mr-2" />
+              View Volunteers on Map
+            </button>
+          </motion.div>
         </div>
 
         <motion.div

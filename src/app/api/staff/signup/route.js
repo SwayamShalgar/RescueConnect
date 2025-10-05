@@ -21,6 +21,8 @@ export async function POST(req) {
     const skills = formData.get('skills');
     const certifications = JSON.parse(formData.get('certifications') || '[]');
     const aadhaarImage = formData.get('aadhaarImage');
+    const latitude = formData.get('latitude');
+    const longitude = formData.get('longitude');
 
     // Validate required fields
     if (!name || !contact || !password) {
@@ -70,13 +72,56 @@ export async function POST(req) {
       }
     }
 
-    // Insert into database
+    // Check which optional columns exist
+    const checkColumnsQuery = `
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'volunteers' 
+      AND column_name IN ('status', 'last_login')
+    `;
+    const columnCheck = await client.query(checkColumnsQuery);
+    const existingColumns = columnCheck.rows.map(row => row.column_name);
+    const hasStatusColumn = existingColumns.includes('status');
+    const hasLastLoginColumn = existingColumns.includes('last_login');
+
+    // Insert into database with location
+    const lat = latitude && !isNaN(parseFloat(latitude)) ? parseFloat(latitude) : null;
+    const lng = longitude && !isNaN(parseFloat(longitude)) ? parseFloat(longitude) : null;
+    
+    // Build INSERT query dynamically
+    let insertFields = 'name, contact, password, skills, certifications, aadhaar_image_url, lat, long';
+    let valuePlaceholders = '$1, $2, $3, $4, $5, $6, $7, $8';
+    let values = [
+      name, 
+      contact, 
+      hashedPassword, 
+      skills || null, 
+      certifications, 
+      aadhaarImageUrl || null,
+      lat,
+      lng
+    ];
+    
+    let placeholderCount = 8;
+    
+    if (hasStatusColumn) {
+      insertFields += ', status';
+      valuePlaceholders += `, $${++placeholderCount}`;
+      values.push('available');
+    }
+    
+    if (hasLastLoginColumn) {
+      insertFields += ', last_login';
+      valuePlaceholders += ', NOW()';
+    }
+    
     const insertQuery = `
-      INSERT INTO volunteers (name, contact, password, skills, certifications, aadhaar_image_url)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO volunteers (${insertFields})
+      VALUES (${valuePlaceholders})
       RETURNING *;
     `;
-    const values = [name, contact, hashedPassword, skills || null, certifications, aadhaarImageUrl || null];
+    
+    console.log('Inserting volunteer with location:', { lat, lng, hasStatusColumn, hasLastLoginColumn });
     const newVolunteer = await client.query(insertQuery, values);
 
     // Generate JWT token

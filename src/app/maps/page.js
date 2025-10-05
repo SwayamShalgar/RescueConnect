@@ -20,6 +20,8 @@ export default function MapsPage() {
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
   const [locationError, setLocationError] = useState(null);
+  const [currentDateTime, setCurrentDateTime] = useState(new Date());
+  const [isMounted, setIsMounted] = useState(false);
   const mapRef = useRef(null); // Reference to the Leaflet map
 
   // Fetch user's location
@@ -152,6 +154,15 @@ export default function MapsPage() {
     fetchRequests();
   }, []);
 
+  // Update current date and time every second (client-side only)
+  useEffect(() => {
+    setIsMounted(true);
+    const timer = setInterval(() => {
+      setCurrentDateTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   // Zoom in and out handlers
   const handleZoomIn = () => {
     if (mapRef.current) {
@@ -177,7 +188,16 @@ export default function MapsPage() {
       </motion.div>
       <h2 className="text-3xl font-bold text-gray-800 mb-4">Local Disaster and Request Map</h2>
       <p className="text-gray-600 max-w-md text-center mb-8">
-        Real-time visualization of ongoing disaster events and pending/emergency requests near your location as of 08:17 PM IST on Tuesday, June 03, 2025. Explore the map to see affected areas and requests within 100 km. Use the zoom buttons to adjust the view.
+        Real-time visualization of ongoing disaster events and pending/emergency requests near your location{isMounted && ` as of ${currentDateTime.toLocaleTimeString('en-IN', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          hour12: true 
+        })} IST on ${currentDateTime.toLocaleDateString('en-US', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        })}`}. Explore the map to see affected areas and requests within 100 km. Use the zoom buttons to adjust the view.
       </p>
 
       {/* Location Error Message */}

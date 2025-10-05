@@ -1,9 +1,9 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { FiUser, FiLock, FiMail, FiPhone, FiAlertCircle } from 'react-icons/fi';
+import { FiUser, FiLock, FiMail, FiPhone, FiAlertCircle, FiMapPin } from 'react-icons/fi';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -13,6 +13,10 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loginMethod, setLoginMethod] = useState('email'); // 'email' or 'phone'
+  const [currentDateTime, setCurrentDateTime] = useState(new Date());
+  const [isMounted, setIsMounted] = useState(false);
+  const [locationStatus, setLocationStatus] = useState('');
+  const [locationFetched, setLocationFetched] = useState(false);
 
   // Validation functions
   const validateEmail = (email) => {
@@ -33,6 +37,77 @@ export default function LoginPage() {
     if (!password) return 'Password is required';
     return '';
   };
+
+  // Update current date and time every second (client-side only)
+  useEffect(() => {
+    setIsMounted(true);
+    const timer = setInterval(() => {
+      setCurrentDateTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Manual location fetch function
+  const handleFetchLocation = async () => {
+    if (!navigator.geolocation) {
+      setLocationStatus('Geolocation is not supported by your browser');
+      return;
+    }
+
+    setLocationStatus('Fetching location...');
+    setLocationFetched(false);
+
+    try {
+      const position = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        });
+      });
+
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
+      
+      setLocationStatus(`✓ Location detected: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+      setLocationFetched(true);
+      console.log('Location manually fetched:', latitude, longitude);
+    } catch (geoError) {
+      setLocationStatus(`✗ Failed to get location: ${geoError.message}`);
+      setLocationFetched(false);
+    }
+  };
+
+  // Auto-request location when component mounts
+  useEffect(() => {
+    const requestLocation = async () => {
+      if (navigator.geolocation) {
+        try {
+          setLocationStatus('📍 Requesting your location...');
+          const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true,
+              timeout: 10000,
+              maximumAge: 0
+            });
+          });
+          
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          setLocation({ latitude: lat, longitude: lng });
+          setLocationStatus(`✓ Location detected: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+          console.log('Location automatically captured:', lat, lng);
+        } catch (error) {
+          console.warn('Auto-location failed:', error.message);
+          setLocationStatus('⚠️ Location access denied. Click "Get Current Location" to enable.');
+        }
+      } else {
+        setLocationStatus('⚠️ Geolocation not supported by browser');
+      }
+    };
+    
+    requestLocation();
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -65,9 +140,36 @@ export default function LoginPage() {
     }
 
     try {
+      // Use stored location or try to get it again
+      let latitude = location?.latitude || null;
+      let longitude = location?.longitude || null;
+      
+      if (!latitude || !longitude) {
+        if (navigator.geolocation) {
+          try {
+            const position = await new Promise((resolve, reject) => {
+              navigator.geolocation.getCurrentPosition(resolve, reject, {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+              });
+            });
+            
+            latitude = position.coords.latitude;
+            longitude = position.coords.longitude;
+            console.log('Location captured on login:', latitude, longitude);
+          } catch (geoError) {
+            console.warn('Could not get location:', geoError.message);
+            // Continue with login even if location fails
+          }
+        }
+      } else {
+        console.log('Using pre-captured location:', latitude, longitude);
+      }
+
       const res = await fetch('/api/staff/login', {
         method: 'POST',
-        body: JSON.stringify({ contact, password }),
+        body: JSON.stringify({ contact, password, latitude, longitude }),
         headers: { 'Content-Type': 'application/json' }
       });
 
@@ -83,6 +185,12 @@ export default function LoginPage() {
       }
 
       if (!res.ok) throw new Error(data.message || 'Login failed');
+
+      // Store the JWT token in localStorage
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        console.log('Token stored successfully');
+      }
 
       router.push('/volunteersdashboard');
     } catch (err) {
@@ -130,7 +238,16 @@ export default function LoginPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.5 }}
           >
-            Sign in to your Disaster Response account as of 01:17 AM IST on Saturday, May 31, 2025.
+            Sign in to your Disaster Response account{isMounted && ` as of ${currentDateTime.toLocaleTimeString('en-IN', { 
+              hour: '2-digit', 
+              minute: '2-digit',
+              hour12: true 
+            })} IST on ${currentDateTime.toLocaleDateString('en-US', { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            })}`}.
           </motion.p>
         </div>
 
@@ -247,6 +364,38 @@ export default function LoginPage() {
                     )}
                   </button>
                 </div>
+              </div>
+
+              {/* Location Status */}
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex-1">
+                    <h3 className="text-sm font-semibold text-blue-900 mb-1 flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      Location Sharing
+                    </h3>
+                    <p className="text-xs text-blue-700">
+                      {locationStatus || 'Share your location to appear on the volunteer map'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleFetchLocation}
+                  className={`w-full py-2 px-4 rounded-lg font-medium transition-all flex items-center justify-center ${
+                    locationFetched
+                      ? 'bg-green-500 text-white hover:bg-green-600'
+                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                  }`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                  </svg>
+                  {locationFetched ? 'Location Ready' : 'Get Current Location'}
+                </button>
               </div>
 
               {error && (

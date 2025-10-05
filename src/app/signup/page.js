@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FiUser, FiMail, FiPhone, FiLock, FiTool, FiEye, FiEyeOff, FiArrowRight, FiImage, FiRefreshCw } from 'react-icons/fi';
 
@@ -20,12 +20,18 @@ export default function SignupPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [activeStep, setActiveStep] = useState(1);
     const [contactMethod, setContactMethod] = useState('email');
+    const [currentDateTime, setCurrentDateTime] = useState(new Date());
+    const [isMounted, setIsMounted] = useState(false);
 
     // CAPTCHA states
     const [captchaNum1, setCaptchaNum1] = useState(Math.floor(Math.random() * 10));
     const [captchaNum2, setCaptchaNum2] = useState(Math.floor(Math.random() * 10));
     const [captchaAnswer, setCaptchaAnswer] = useState('');
     const [captchaError, setCaptchaError] = useState('');
+    
+    // Location states
+    const [location, setLocation] = useState(null);
+    const [locationStatus, setLocationStatus] = useState('');
 
     // Validation functions
     const validateName = (name) => {
@@ -84,6 +90,46 @@ export default function SignupPage() {
         setCaptchaAnswer('');
         setCaptchaError('');
     };
+
+    // Update current date and time every second (client-side only)
+    useEffect(() => {
+        setIsMounted(true);
+        const timer = setInterval(() => {
+            setCurrentDateTime(new Date());
+        }, 1000);
+        return () => clearInterval(timer);
+    }, []);
+
+    // Auto-request location when component mounts
+    useEffect(() => {
+        const requestLocation = async () => {
+            if (navigator.geolocation) {
+                try {
+                    setLocationStatus('📍 Requesting your location...');
+                    const position = await new Promise((resolve, reject) => {
+                        navigator.geolocation.getCurrentPosition(resolve, reject, {
+                            enableHighAccuracy: true,
+                            timeout: 10000,
+                            maximumAge: 0
+                        });
+                    });
+                    
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    setLocation({ latitude: lat, longitude: lng });
+                    setLocationStatus(`✓ Location detected: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+                    console.log('Location automatically captured:', lat, lng);
+                } catch (error) {
+                    console.warn('Auto-location failed:', error.message);
+                    setLocationStatus('⚠️ Location access denied. This will be requested again on signup.');
+                }
+            } else {
+                setLocationStatus('⚠️ Geolocation not supported by browser');
+            }
+        };
+        
+        requestLocation();
+    }, []);
 
     const handleAadhaarImageChange = (e) => {
         const file = e.target.files[0];
@@ -189,6 +235,36 @@ export default function SignupPage() {
             return;
         }
 
+        // Get location if not already captured
+        let latitude = location?.latitude || null;
+        let longitude = location?.longitude || null;
+        
+        if (!latitude || !longitude) {
+            if (navigator.geolocation) {
+                try {
+                    setLocationStatus('📍 Capturing your location...');
+                    const position = await new Promise((resolve, reject) => {
+                        navigator.geolocation.getCurrentPosition(resolve, reject, {
+                            enableHighAccuracy: true,
+                            timeout: 10000,
+                            maximumAge: 0
+                        });
+                    });
+                    
+                    latitude = position.coords.latitude;
+                    longitude = position.coords.longitude;
+                    setLocationStatus(`✓ Location captured: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+                    console.log('Location captured on signup:', latitude, longitude);
+                } catch (geoError) {
+                    console.warn('Could not get location:', geoError.message);
+                    setLocationStatus('⚠️ Location capture failed, continuing without location');
+                    // Continue with signup even if location fails
+                }
+            }
+        } else {
+            console.log('Using pre-captured location:', latitude, longitude);
+        }
+
         // Prepare form data
         const formData = new FormData();
         formData.append('name', name);
@@ -196,6 +272,10 @@ export default function SignupPage() {
         formData.append('password', password);
         formData.append('skills', skills);
         formData.append('certifications', JSON.stringify(certifications));
+        if (latitude && longitude) {
+            formData.append('latitude', latitude.toString());
+            formData.append('longitude', longitude.toString());
+        }
         if (aadhaarImage) {
             formData.append('aadhaarImage', aadhaarImage);
         }
@@ -319,7 +399,16 @@ export default function SignupPage() {
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.4 }}
                     >
-                        Join our emergency response team as of 01:13 AM IST on Saturday, May 31, 2025, and help communities in times of crisis.
+                        Join our emergency response team{isMounted && ` as of ${currentDateTime.toLocaleTimeString('en-IN', { 
+                            hour: '2-digit', 
+                            minute: '2-digit',
+                            hour12: true 
+                        })} IST on ${currentDateTime.toLocaleDateString('en-US', { 
+                            weekday: 'long', 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                        })}`}, and help communities in times of crisis.
                     </motion.p>
                 </div>
 
@@ -628,6 +717,19 @@ export default function SignupPage() {
                                         <p className="mt-1 text-gray-600">
                                             Aadhaar Image: {aadhaarImage ? 'Uploaded' : 'Not provided'}
                                         </p>
+                                    </div>
+                                    
+                                    {/* Location Status */}
+                                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                        <h3 className="text-sm font-medium text-blue-800 mb-2">📍 Location Sharing</h3>
+                                        <p className="text-sm text-blue-700">
+                                            {locationStatus || '⚠️ Location not detected yet. Will be requested on signup.'}
+                                        </p>
+                                        {location && (
+                                            <p className="text-xs text-blue-600 mt-1">
+                                                This helps other users find you on the volunteer map.
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
 
