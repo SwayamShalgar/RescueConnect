@@ -3,10 +3,16 @@
 import { motion } from 'framer-motion';
 import { useState, useEffect, createContext, useContext } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { FiUser, FiPhone, FiHelpCircle, FiAlertTriangle, FiMessageSquare, FiMapPin, FiArrowRight, FiCrosshair, FiHome, FiMap, FiAlertCircle, FiMessageCircle, FiActivity, FiX, FiImage, FiSend } from 'react-icons/fi';
 import MapsPage from '../maps/page';
 import LiveChatPage from '../chat/page';
 import AIChatPage from '../ai/page';
+
+// Dynamically import GoogleTranslate with SSR disabled
+const GoogleTranslate = dynamic(() => import('../components/GoogleTranslate'), {
+  ssr: false,
+});
 
 // Create a Location Context
 const LocationContext = createContext({
@@ -61,6 +67,11 @@ export default function App() {
   return (
     <LocationContext.Provider value={{ location, setLocation }}>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-100">
+        {/* Language Selector - Top Left */}
+        <div className="fixed top-4 left-4 z-50">
+          <GoogleTranslate />
+        </div>
+
         {/* Floating Navbar */}
         <motion.nav
           className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-50 max-w-2xl w-full px-4 ${isNavOpen ? 'backdrop-blur-lg' : ''}`}

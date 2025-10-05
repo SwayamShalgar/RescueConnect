@@ -2,9 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import dynamic from 'next/dynamic';
 import { FiAlertTriangle } from 'react-icons/fi';
 import { jwtDecode } from 'jwt-decode';
 import { useRouter } from 'next/navigation';
+
+// Dynamically import GoogleTranslate with SSR disabled
+const GoogleTranslate = dynamic(() => import('../components/GoogleTranslate'), {
+  ssr: false,
+});
 
 export default function VolunteersDashboard() {
   const router = useRouter();
@@ -229,6 +235,11 @@ export default function VolunteersDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-100 py-12 px-4 sm:px-6 lg:px-8">
+      {/* Language Selector - Top Right */}
+      <div className="fixed top-4 right-4 z-50">
+        {isMounted && <GoogleTranslate />}
+      </div>
+
       <div className="max-w-7xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: -20 }}

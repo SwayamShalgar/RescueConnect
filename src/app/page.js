@@ -2,11 +2,26 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
+
+// Dynamically import GoogleTranslate with SSR disabled
+const GoogleTranslate = dynamic(() => import('./components/GoogleTranslate'), {
+  ssr: false,
+  loading: () => (
+    <div className="px-4 py-2 bg-white rounded-xl border-2 border-gray-200 text-sm font-semibold text-gray-800">
+      <svg className="inline-block h-5 w-5 mr-2 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      Loading...
+    </div>
+  )
+});
 
 export default function HomePage() {
   const [isHovered, setIsHovered] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [currentDateTime, setCurrentDateTime] = useState(new Date());
+  const [currentDateTime, setCurrentDateTime] = useState(null);
   const [isMounted, setIsMounted] = useState(false);
   const [stats, setStats] = useState({
     users: 0,
@@ -34,12 +49,15 @@ export default function HomePage() {
 
   // Update current date and time every second (client-side only)
   useEffect(() => {
-    setIsMounted(true);
-    const timer = setInterval(() => {
-      setCurrentDateTime(new Date());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
+  setIsMounted(true);
+  setCurrentDateTime(new Date()); // Initialize on mount
+  
+  const timer = setInterval(() => {
+    setCurrentDateTime(new Date());
+  }, 60000); // Update every 60000ms = 1 minute
+  
+  return () => clearInterval(timer);
+}, []);
 
   // Initialize stats with animation
   useEffect(() => {
@@ -51,7 +69,6 @@ export default function HomePage() {
     };
 
     const duration = 3000;
-    const increment = 50;
     let animationFrame;
     
     const animateStats = (startTime) => {
@@ -80,10 +97,127 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-100 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-100 relative overflow-x-hidden">
+      {/* Add global styles for Google Translate dropdown fix */}
+      <style jsx global>{`
+        /* Fix for Google Translate dropdown overflow and z-index issues */
+        #google_translate_element {
+          position: relative;
+          z-index: 9999 !important;
+        }
+
+        .goog-te-gadget {
+          font-family: inherit !important;
+          font-size: 14px !important;
+        }
+
+        .goog-te-combo {
+          padding: 8px 32px 8px 12px !important;
+          border: 2px solid #e5e7eb !important;
+          border-radius: 0.75rem !important;
+          background: white !important;
+          color: #1f2937 !important;
+          font-size: 14px !important;
+          font-weight: 500 !important;
+          cursor: pointer !important;
+          transition: all 0.3s ease !important;
+          min-width: 140px !important;
+          appearance: none !important;
+          -webkit-appearance: none !important;
+          -moz-appearance: none !important;
+        }
+
+        .goog-te-combo:hover {
+          border-color: #3b82f6 !important;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+        }
+
+        .goog-te-combo:focus {
+          outline: none !important;
+          border-color: #2563eb !important;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+        }
+
+        /* Style the dropdown arrow */
+        .goog-te-gadget-icon {
+          display: none !important;
+        }
+
+        /* Hide "Powered by Google" text */
+        .goog-te-gadget-simple .goog-te-menu-value span:first-child {
+          display: none !important;
+        }
+
+        .goog-te-gadget-simple .goog-te-menu-value span:nth-child(3) {
+          display: none !important;
+        }
+
+        .goog-te-gadget-simple .goog-te-menu-value span:nth-child(5) {
+          border: none !important;
+        }
+
+        /* Custom styling for the banner that appears at top */
+        .goog-te-banner-frame.skiptranslate {
+          display: none !important;
+        }
+
+        body {
+          top: 0 !important;
+        }
+
+        /* Ensure dropdown menu appears above all content */
+        .goog-te-menu-frame {
+          z-index: 99999 !important;
+          max-height: 400px !important;
+          overflow-y: auto !important;
+        }
+
+        /* Style the language options in dropdown */
+        .goog-te-menu2 {
+          max-width: 100% !important;
+          overflow-x: hidden !important;
+          background: white !important;
+          border: 1px solid #e5e7eb !important;
+          border-radius: 0.5rem !important;
+          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+        }
+
+        .goog-te-menu2-item div, .goog-te-menu2-item:link div, .goog-te-menu2-item:visited div, .goog-te-menu2-item:active div {
+          color: #374151 !important;
+          padding: 8px 16px !important;
+          transition: background 0.2s ease !important;
+        }
+
+        .goog-te-menu2-item:hover div {
+          background: #f3f4f6 !important;
+        }
+
+        .goog-te-menu2-item-selected div {
+          background: #eff6ff !important;
+          color: #2563eb !important;
+          font-weight: 600 !important;
+        }
+
+        /* Remove overflow restrictions from navigation area */
+        nav {
+          overflow: visible !important;
+        }
+
+        /* Ensure proper stacking context */
+        main {
+          position: relative;
+          z-index: 1;
+        }
+
+        header, nav {
+          position: relative;
+          z-index: 1000;
+        }
+      `}</style>
+
       {/* Enhanced background with animated gradient */}
       <motion.div 
-        className="absolute top-0 left-0 w-full h-full overflow-hidden"
+        className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none"
         initial={{ opacity: 0 }}
         animate={{ opacity: 0.4 }}
         transition={{ duration: 2 }}
@@ -91,13 +225,14 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-r from-blue-200/20 via-teal-200/20 to-cyan-200/20 animate-gradient-xy"></div>
       </motion.div>
 
-      {/* Navigation Bar */}
-      <nav className="relative z-10 py-6 px-4 sm:px-8 flex justify-between items-center">
+      {/* Navigation Bar - Fixed overflow issue */}
+      <nav className="relative z-[1000] py-4 md:py-6 px-4 sm:px-8 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-0 items-start">
+        {/* Left - Logo */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
-          className="flex items-center"
+          className="flex items-center justify-center md:justify-start"
         >
           <div className="bg-blue-600 w-10 h-10 rounded-lg flex items-center justify-center">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -107,38 +242,54 @@ export default function HomePage() {
           <span className="ml-3 text-xl font-bold text-gray-800">RescueConnect</span>
         </motion.div>
         
-        <motion.a
-              whileHover={{ 
-                scale: 1.05,
-                boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)"
-              }}
-              whileTap={{ scale: 0.95 }}
-              href="/user/signup"
-              className="px-8 py-4 bg-white text-gray-900 font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-              </svg>
-              Create User
-            </motion.a>
-            <motion.a
-              whileHover={{ 
-                scale: 1.05,
-                boxShadow: "0 10px 25px -5px rgba(59, 130, 246, 0.5)"
-              }}
-              whileTap={{ scale: 0.95 }}
-              href="/user/login"
-              className="px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-              </svg>
-              Login User
-            </motion.a>
+        {/* Center - Language Dropdown with proper z-index and SSR disabled */}
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="flex justify-center relative z-[9999]"
+          style={{ position: 'relative', zIndex: 9999 }}
+          suppressHydrationWarning
+        >
+          {isMounted && <GoogleTranslate />}
+        </motion.div>
+        
+        {/* Right - Action Buttons Group */}
+        <div className="flex items-center justify-center md:justify-end gap-3 flex-wrap">
+          <motion.a
+            whileHover={{ 
+              scale: 1.05,
+              boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)"
+            }}
+            whileTap={{ scale: 0.95 }}
+            href="/user/signup"
+            className="px-4 md:px-6 py-2 md:py-3 bg-white text-gray-900 font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center text-sm md:text-base"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 md:h-5 w-4 md:w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+            </svg>
+            Create User
+          </motion.a>
+          
+          <motion.a
+            whileHover={{ 
+              scale: 1.05,
+              boxShadow: "0 10px 25px -5px rgba(59, 130, 246, 0.5)"
+            }}
+            whileTap={{ scale: 0.95 }}
+            href="/user/login"
+            className="px-4 md:px-6 py-2 md:py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center text-sm md:text-base"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 md:h-5 w-4 md:w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+            </svg>
+            Login User
+          </motion.a>
+        </div>
       </nav>
 
       {/* Main Content */}
-      <main className="relative z-10 flex flex-col items-center justify-center min-h-[80vh] px-4 py-12">
+      <main className="relative z-[1] flex flex-col items-center justify-center min-h-[80vh] px-4 py-12">
         <motion.div
           className="text-center max-w-6xl"
           initial={{ opacity: 0, y: 20 }}
@@ -191,7 +342,7 @@ export default function HomePage() {
               }}
               whileTap={{ scale: 0.95 }}
               href="/login"
-              className="px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center"
+              className="px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
@@ -206,13 +357,14 @@ export default function HomePage() {
               }}
               whileTap={{ scale: 0.95 }}
               href="/signup"
-              className="px-8 py-4 bg-white text-gray-900 font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center"
+              className="px-8 py-4 bg-white text-gray-900 font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
               </svg>
               Create Volunteer
             </motion.a>
+            
             <motion.a
               whileHover={{ 
                 scale: 1.05,
@@ -220,7 +372,7 @@ export default function HomePage() {
               }}
               whileTap={{ scale: 0.95 }}
               href="/userdashboard"
-              className="px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center"
+              className="px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
@@ -231,13 +383,13 @@ export default function HomePage() {
 
           {/* Rescue Statistics */}
           <motion.div 
-            className="bg-gradient-to-r from-blue-500 to-teal-500 rounded-2xl shadow-xl p-8 mb-16"
+            className="bg-gradient-to-r from-blue-500 to-teal-500 rounded-2xl shadow-xl p-4 md:p-8 mb-16"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7 }}
           >
-            <h3 className="text-2xl font-bold text-center text-white mb-8">Our Impact</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <h3 className="text-xl md:text-2xl font-bold text-center text-white mb-6 md:mb-8">Our Impact</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
               {[
                 { value: stats.users, label: "Registered Users", icon: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" },
                 { value: stats.rescues, label: "Rescues Completed", icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" },
@@ -245,20 +397,20 @@ export default function HomePage() {
                 { value: stats.active, label: "Active Operations", icon: "M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" }
               ].map((stat, index) => (
                 <div key={index} className="flex flex-col items-center">
-                  <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div className="w-12 md:w-16 h-12 md:h-16 rounded-full bg-white/20 flex items-center justify-center mb-2 md:mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 md:h-8 w-6 md:w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={stat.icon} />
                     </svg>
                   </div>
                   <motion.div 
-                    className="text-4xl font-bold text-white mb-2"
+                    className="text-2xl md:text-4xl font-bold text-white mb-1 md:mb-2"
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.1 * index }}
                   >
                     {stat.value.toLocaleString()}+
                   </motion.div>
-                  <div className="text-white/80 text-center">{stat.label}</div>
+                  <div className="text-white/80 text-center text-xs md:text-base">{stat.label}</div>
                 </div>
               ))}
             </div>
@@ -266,7 +418,7 @@ export default function HomePage() {
           
           {/* Image Slider */}
           <motion.div 
-            className="relative w-full max-w-5xl mx-auto h-[400px] rounded-2xl overflow-hidden shadow-2xl mb-16"
+            className="relative w-full max-w-5xl mx-auto h-[250px] md:h-[400px] rounded-2xl overflow-hidden shadow-2xl mb-12 md:mb-16"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.9 }}
@@ -284,6 +436,7 @@ export default function HomePage() {
               >
                 <img 
                   src={img} 
+                  alt={`Disaster response ${index + 1}`}
                   className="w-full h-full object-cover"
                   onError={(e) => {
                     e.target.onerror = null;
@@ -303,19 +456,20 @@ export default function HomePage() {
                   className={`w-3 h-3 rounded-full transition-all ${
                     currentSlide === index ? 'bg-white w-6' : 'bg-white/50'
                   }`}
+                  aria-label={`Go to slide ${index + 1}`}
                 />
               ))}
             </div>
             
             {/* Slide counter */}
-            <div className="absolute top-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm z-20">
+            <div className="absolute top-2 md:top-4 right-2 md:right-4 bg-black/50 text-white px-2 md:px-3 py-1 rounded-full text-xs md:text-sm z-20">
               {currentSlide + 1} / {disasterImages.length}
             </div>
             
             {/* Slide caption */}
-            <div className="absolute bottom-8 left-8 max-w-md z-20 text-left">
-              <h3 className="text-2xl font-bold text-white mb-2">Rapid Response in Crisis</h3>
-              <p className="text-white/90">Our teams are deployed worldwide within hours of disasters</p>
+            <div className="absolute bottom-4 md:bottom-8 left-4 md:left-8 max-w-xs md:max-w-md z-20 text-left">
+              <h3 className="text-lg md:text-2xl font-bold text-white mb-1 md:mb-2">Rapid Response in Crisis</h3>
+              <p className="text-white/90 text-sm md:text-base hidden md:block">Our teams are deployed worldwide within hours of disasters</p>
             </div>
           </motion.div>
           
@@ -369,11 +523,11 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.2, duration: 0.6 }}
-            className="max-w-5xl mx-auto mt-16"
+            className="max-w-5xl mx-auto mt-12 md:mt-16"
           >
-            <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-6 md:p-8 border border-white">
-              <h3 className="text-2xl font-bold text-center text-gray-800 mb-8">Emergency Contacts</h3>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
+            <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-4 md:p-8 border border-white">
+              <h3 className="text-xl md:text-2xl font-bold text-center text-gray-800 mb-6 md:mb-8">Emergency Contacts</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-6">
                 {[
                   {
                     icon: "M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a2 2 0 012-2h2a2 2 0 012 2v5m-4 0h4",
@@ -438,23 +592,23 @@ export default function HomePage() {
                 ].map((contact, index) => (
                   <motion.div 
                     key={index}
-                    className="flex flex-col items-center text-center p-4 bg-white rounded-xl border border-gray-100 shadow-md hover:shadow-lg transition-shadow"
-                    whileHover={{ y: -10 }}
+                    className="flex flex-col items-center text-center p-3 md:p-4 bg-white rounded-xl border border-gray-100 shadow-md hover:shadow-lg transition-shadow"
+                    whileHover={{ y: -5 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-3">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div className="w-10 md:w-12 h-10 md:h-12 rounded-full bg-red-100 flex items-center justify-center mb-2 md:mb-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 md:h-6 w-5 md:w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={contact.icon} />
                       </svg>
                     </div>
-                    <h4 className="font-bold text-base text-gray-800 mb-1">{contact.title}</h4>
+                    <h4 className="font-bold text-sm md:text-base text-gray-800 mb-1">{contact.title}</h4>
                     <a 
                       href={`tel:${contact.contact}`} 
-                      className="text-sm font-semibold text-red-600 hover:text-red-700 mb-1"
+                      className="text-xs md:text-sm font-semibold text-red-600 hover:text-red-700 mb-1"
                     >
                       {contact.contact}
                     </a>
-                    <p className="text-gray-600 text-sm">{contact.desc}</p>
+                    <p className="text-gray-600 text-xs hidden lg:block line-clamp-2">{contact.desc}</p>
                   </motion.div>
                 ))}
               </div>
@@ -472,8 +626,8 @@ export default function HomePage() {
       >
         <div className="max-w-6xl mx-auto">
           <p>© 2025 Disaster Crisis Response Platform. All rights reserved.</p>
-          <p className="mt-2 text-sm">
-            {isMounted ? `Last updated: ${currentDateTime.toLocaleTimeString('en-IN', { 
+          <p className="mt-2 text-sm" suppressHydrationWarning>
+            {isMounted && currentDateTime ? `Last updated: ${currentDateTime.toLocaleTimeString('en-IN', { 
               hour: '2-digit', 
               minute: '2-digit',
               second: '2-digit',
@@ -485,22 +639,19 @@ export default function HomePage() {
               day: 'numeric' 
             })}` : 'Loading...'}
           </p>
-          <p className="mt-2 text-sm">Built with ❤ to help communities in need</p>
+          <p className="mt-2 text-sm">Built with ❤️ to help communities in need</p>
           <div className="mt-4 flex justify-center space-x-6">
-            <a href="#" className="text-gray-500 hover:text-blue-600">
-              <span className="sr-only">Twitter</span>
+            <a href="#" className="text-gray-500 hover:text-blue-600 transition-colors" aria-label="Twitter">
               <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
               </svg>
             </a>
-            <a href="#" className="text-gray-500 hover:text-blue-600">
-              <span className="sr-only">GitHub</span>
+            <a href="#" className="text-gray-500 hover:text-blue-600 transition-colors" aria-label="GitHub">
               <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
               </svg>
             </a>
-            <a href="#" className="text-gray-500 hover:text-blue-600">
-              <span className="sr-only">LinkedIn</span>
+            <a href="#" className="text-gray-500 hover:text-blue-600 transition-colors" aria-label="LinkedIn">
               <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path fillRule="evenodd" d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" clipRule="evenodd" />
               </svg>
@@ -508,39 +659,6 @@ export default function HomePage() {
           </div>
         </div>
       </motion.footer>
-
-      {/* Floating emergency button */}
-      {/* <motion.button
-        className="fixed bottom-8 right-8 w-16 h-16 bg-red-500 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl z-20"
-        whileHover={{ scale: 1.1, backgroundColor: "#dc2626" }}
-        whileTap={{ scale: 0.9 }}
-        animate={{ 
-          scale: [1, 1.05, 1],
-          boxShadow: ["0 0 0 0 rgba(220, 38, 38, 0.7)", "0 0 0 10px rgba(220, 38, 38, 0)", "0 0 0 0 rgba(220, 38, 38, 0)"]
-        }}
-        transition={{ 
-          scale: { duration: 0.3 },
-          boxShadow: { repeat: Infinity, duration: 1.5 }
-        }}
-        onHoverStart={() => setIsHovered(true)}
-        onHoverEnd={() => setIsHovered(false)}
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-        </svg>
-        <AnimatePresence>
-          {isHovered && (
-            <motion.span 
-              className="absolute right-20 bg-red-500 text-white px-4 py-2 rounded-lg whitespace-nowrap shadow-lg"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0 }}
-            >
-              Emergency Alert
-            </motion.span>
-          )}
-        </AnimatePresence>
-      </motion.button> */}
     </div>
   );
 }

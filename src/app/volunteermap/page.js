@@ -260,18 +260,11 @@ export default function VolunteerMapPage() {
   };
 
   // Custom icon for volunteers
-  const createCustomIcon = (status) => {
+  const createCustomIcon = () => {
     if (!L) return null;
     
-    // Color scheme: Available-Green, Busy-Yellow, Offline-Gray
-    let color;
-    if (status === 'available') {
-      color = '#10b981'; // Green
-    } else if (status === 'busy') {
-      color = '#fbbf24'; // Yellow
-    } else {
-      color = '#6b7280'; // Gray
-    }
+    // Simple green marker for all volunteers
+    const color = '#10b981'; // Green
     
     return L.divIcon({
       className: 'custom-icon',
@@ -402,24 +395,13 @@ export default function VolunteerMapPage() {
           >
             <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
               <FiActivity className="mr-2" />
-              Volunteer Status
+              Volunteer Information
             </h3>
-            <div className="flex flex-wrap gap-4">
-              <div className="flex items-center">
-                <div className="w-4 h-4 rounded-full bg-green-500 mr-2"></div>
-                <span className="text-sm text-gray-700">Available</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-4 h-4 rounded-full bg-yellow-400 mr-2"></div>
-                <span className="text-sm text-gray-700">Busy</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-4 h-4 rounded-full bg-gray-500 mr-2"></div>
-                <span className="text-sm text-gray-700">Offline</span>
-              </div>
-            </div>
-            <p className="text-sm text-gray-600 mt-2">
+            <p className="text-sm text-gray-600">
               Total Volunteers: <strong>{volunteers.length}</strong>
+            </p>
+            <p className="text-xs text-gray-500 mt-2">
+              Click on any marker to view volunteer details and get directions
             </p>
           </motion.div>
         )}
@@ -452,26 +434,12 @@ export default function VolunteerMapPage() {
                 <Marker
                   key={volunteer.id}
                   position={[Number(volunteer.latitude), Number(volunteer.longitude)]}
-                  icon={createCustomIcon(volunteer.status || 'available')}
+                  icon={createCustomIcon()}
                 >
                   <Popup>
                     <div className="p-2 min-w-[250px]">
                       <h3 className="font-bold text-lg text-gray-900 mb-2">{volunteer.name}</h3>
                       <div className="space-y-1 text-sm">
-                        <p className="text-gray-700">
-                          <strong>Status:</strong>{' '}
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              volunteer.status === 'available'
-                                ? 'bg-green-500 text-white'
-                                : volunteer.status === 'busy'
-                                ? 'bg-yellow-400 text-gray-900'
-                                : 'bg-gray-500 text-white'
-                            }`}
-                          >
-                            {volunteer.status || 'Available'}
-                          </span>
-                        </p>
                         {volunteer.skills && (
                           <p className="text-gray-700">
                             <strong>Skills:</strong> {volunteer.skills}

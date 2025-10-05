@@ -1,9 +1,15 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import dynamic from 'next/dynamic';
 import { FiActivity, FiSend, FiThermometer, FiDroplet, FiWind, FiAlertTriangle, FiMapPin, FiCheckSquare } from 'react-icons/fi';
 import { useState, useEffect, useRef } from 'react';
 import { getNearestCity } from '../utils/cities';
+
+// Dynamically import GoogleTranslate with SSR disabled
+const GoogleTranslate = dynamic(() => import('../components/GoogleTranslate'), {
+  ssr: false,
+});
 
 export default function AIChatPage() {
   const [userLocation, setUserLocation] = useState({ city: null, lat: null, lon: null });
@@ -275,6 +281,11 @@ export default function AIChatPage() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
     >
+      {/* Language Selector - Top Right */}
+      <div className="fixed top-4 right-4 z-50">
+        <GoogleTranslate />
+      </div>
+
       <div className="bg-gradient-to-r from-blue-600 to-teal-600 p-5 rounded-full mb-6">
         <FiActivity size={40} className="text-white" />
       </div>

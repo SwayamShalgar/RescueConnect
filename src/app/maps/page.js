@@ -11,6 +11,11 @@ const DisasterMap = dynamic(() => import('../components/DisasterMap'), {
   loading: () => <p className="text-gray-600 text-center">Loading map...</p>,
 });
 
+// Dynamically import GoogleTranslate with SSR disabled
+const GoogleTranslate = dynamic(() => import('../components/GoogleTranslate'), {
+  ssr: false,
+});
+
 export default function MapsPage() {
   const [disasters, setDisasters] = useState([]);
   const [requests, setRequests] = useState([]);
@@ -178,6 +183,11 @@ export default function MapsPage() {
 
   return (
     <div className="flex flex-col items-center min-h-screen p-4">
+      {/* Language Selector - Top Right */}
+      <div className="fixed top-4 right-4 z-50">
+        {isMounted && <GoogleTranslate />}
+      </div>
+
       <motion.div
         className="bg-gradient-to-r from-blue-600 to-teal-600 p-5 rounded-full mb-6"
         initial={{ scale: 0.8, opacity: 0 }}

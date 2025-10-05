@@ -3,7 +3,13 @@
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { FiUser, FiMail, FiPhone, FiLock, FiTool, FiEye, FiEyeOff, FiArrowRight, FiImage, FiRefreshCw } from 'react-icons/fi';
+
+// Dynamically import GoogleTranslate with SSR disabled
+const GoogleTranslate = dynamic(() => import('../components/GoogleTranslate'), {
+  ssr: false,
+});
 
 export default function SignupPage() {
     const router = useRouter();
@@ -367,6 +373,11 @@ export default function SignupPage() {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-teal-100 p-4">
+            {/* Language Selector - Top Right */}
+            <div className="fixed top-4 right-4 z-50">
+                {isMounted && <GoogleTranslate />}
+            </div>
+
             {/* Decorative background elements */}
             <div className="fixed top-0 left-0 w-full h-full overflow-hidden -z-10">
                 <div className="absolute top-20 left-10 w-64 h-64 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>

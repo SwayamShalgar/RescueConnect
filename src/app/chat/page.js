@@ -4,8 +4,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiActivity, FiSend, FiUsers, FiMapPin, FiChevronDown, FiSearch } from 'react-icons/fi';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { jwtDecode } from 'jwt-decode';
 import { getNearestCity } from '../utils/cities';
+
+// Dynamically import GoogleTranslate with SSR disabled
+const GoogleTranslate = dynamic(() => import('../components/GoogleTranslate'), {
+  ssr: false,
+});
 
 // All city names for auto-generating groups
 const ALL_CITIES = [
@@ -254,6 +260,11 @@ export default function LiveChatPage() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
     >
+      {/* Language Selector - Top Right */}
+      <div className="fixed top-4 right-4 z-50">
+        <GoogleTranslate />
+      </div>
+
       <div className="bg-gradient-to-r from-blue-600 to-teal-600 p-5 rounded-full mb-6">
         <FiActivity size={40} className="text-white" />
       </div>
