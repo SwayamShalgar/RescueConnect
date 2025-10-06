@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { FiActivity, FiMapPin, FiPhone, FiAlertTriangle, FiUser } from 'react-icons/fi';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
 
@@ -24,7 +24,7 @@ const Popup = dynamic(
   { ssr: false }
 );
 
-export default function VolunteerMapPage() {
+function VolunteerMapContent() {
   const searchParams = useSearchParams();
   const [volunteers, setVolunteers] = useState([]);
   const [error, setError] = useState(null);
@@ -541,5 +541,20 @@ export default function VolunteerMapPage() {
         </motion.div>
       </div>
     </div>
+  );
+}
+
+export default function VolunteerMapPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading volunteer map...</p>
+        </div>
+      </div>
+    }>
+      <VolunteerMapContent />
+    </Suspense>
   );
 }

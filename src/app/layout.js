@@ -19,17 +19,18 @@ export const metadata = {
   title: "RescueConnect - Emergency Response Platform",
   description: "Emergency Response Platform for disaster management, rescue operations, and real-time communication with volunteers",
   manifest: "/manifest.json",
-  themeColor: "#2563eb",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "RescueConnect",
   },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-  },
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  themeColor: "#2563eb",
 };
 
 export default function RootLayout({ children }) {
