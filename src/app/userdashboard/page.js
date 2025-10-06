@@ -8,6 +8,7 @@ import { FiUser, FiPhone, FiHelpCircle, FiAlertTriangle, FiMessageSquare, FiMapP
 import MapsPage from '../maps/page';
 import LiveChatPage from '../chat/page';
 import AIChatPage from '../ai/page';
+import { offlineStorage, syncManager } from '../utils/offlineStorage';
 
 // Dynamically import GoogleTranslate with SSR disabled
 const GoogleTranslate = dynamic(() => import('../components/GoogleTranslate'), {
@@ -325,7 +326,56 @@ function RequestPage() {
       return;
     }
 
-    // Prepare form data to send to the backend
+    // Check if user is online
+    const isOnline = navigator.onLine;
+
+    // Prepare request data
+    const requestData = {
+      name,
+      contact,
+      type,
+      urgency,
+      description,
+      latitude: parseFloat(latitude),
+      longitude: parseFloat(longitude),
+    };
+
+    // Convert image to base64 for offline storage if exists
+    if (image) {
+      try {
+        const reader = new FileReader();
+        const imageBase64 = await new Promise((resolve, reject) => {
+          reader.onloadend = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(image);
+        });
+        requestData.imageData = imageBase64;
+        requestData.imageName = image.name;
+      } catch (err) {
+        console.error('Error reading image:', err);
+      }
+    }
+
+    if (!isOnline) {
+      // Save to offline storage
+      try {
+        await offlineStorage.init();
+        await offlineStorage.saveRequest(requestData);
+        
+        alert('🔌 You are offline!\n\nYour request has been saved locally and will be automatically submitted when you reconnect to the internet.');
+        
+        resetForm();
+        setIsLoading(false);
+        return;
+      } catch (err) {
+        console.error('Error saving offline request:', err);
+        setError('Failed to save request offline. Please try again.');
+        setIsLoading(false);
+        return;
+      }
+    }
+
+    // Online: Try to submit directly
     const formData = new FormData();
     formData.append('name', name);
     formData.append('contact', contact);
@@ -355,13 +405,34 @@ function RequestPage() {
 
       if (!res.ok) throw new Error(data.message || 'Request submission failed');
 
-      alert('Request submitted successfully.');
+      alert('✅ Request submitted successfully!');
       resetForm();
       setIsLoading(false);
       router.push('/userdashboard');
     } catch (err) {
       console.error('Frontend error:', err);
-      setError(err.message || 'Request submission failed. Please try again.');
+      
+      // If online but request failed, offer to save offline
+      const shouldSaveOffline = confirm(
+        '⚠️ Request submission failed!\n\n' + 
+        'Would you like to save this request locally? It will be automatically submitted when connection is restored.\n\n' +
+        'Click OK to save offline, or Cancel to try again.'
+      );
+
+      if (shouldSaveOffline) {
+        try {
+          await offlineStorage.init();
+          await offlineStorage.saveRequest(requestData);
+          alert('✅ Request saved offline!\n\nIt will be automatically submitted when you have a stable connection.');
+          resetForm();
+        } catch (offlineErr) {
+          console.error('Error saving offline:', offlineErr);
+          setError('Failed to save request. Please try again.');
+        }
+      } else {
+        setError(err.message || 'Request submission failed. Please try again.');
+      }
+      
       setIsLoading(false);
     }
   };

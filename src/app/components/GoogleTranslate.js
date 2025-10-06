@@ -125,8 +125,9 @@ export default function GoogleTranslate() {
       };
       
       script.onerror = (error) => {
-        console.error('❌ Failed to load Google Translate script:', error);
-        console.log('💡 Check your internet connection or try disabling ad blockers');
+        // Only log warning, not error (to avoid console noise)
+        console.warn('⚠️ Google Translate unavailable. Translation feature disabled.');
+        // Don't log the error object as it's often empty
       };
       
       document.head.appendChild(script);

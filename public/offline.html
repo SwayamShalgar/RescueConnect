@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline - RescueConnect</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .icon {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 50px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            background: #fee;
+            border-radius: 10px;
+            color: #c33;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .status.online {
+            background: #efe;
+            color: #3c3;
+        }
+
+        .pulse {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #c33;
+            animation: pulse 2s infinite;
+        }
+
+        .pulse.online {
+            background: #3c3;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .features {
+            margin-top: 30px;
+            text-align: left;
+        }
+
+        .feature {
+            display: flex;
+            align-items: start;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .feature-icon {
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .feature-text {
+            flex: 1;
+        }
+
+        .feature-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .feature-desc {
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">📡</div>
+        <h1>You're Offline</h1>
+        <p>No internet connection detected. Some features may not be available right now.</p>
+        
+        <div class="status" id="status">
+            <div class="pulse"></div>
+            <span>Offline</span>
+        </div>
+
+        <button onclick="location.reload()">Try Again</button>
+
+        <div class="features">
+            <h3 style="margin-bottom: 15px; color: #333;">Available Offline Features:</h3>
+            
+            <div class="feature">
+                <div class="feature-icon">📄</div>
+                <div class="feature-text">
+                    <div class="feature-title">Cached Pages</div>
+                    <div class="feature-desc">Browse previously loaded pages</div>
+                </div>
+            </div>
+
+            <div class="feature">
+                <div class="feature-icon">📝</div>
+                <div class="feature-text">
+                    <div class="feature-title">Draft Requests</div>
+                    <div class="feature-desc">Save requests to submit when back online</div>
+                </div>
+            </div>
+
+            <div class="feature">
+                <div class="feature-icon">🗺️</div>
+                <div class="feature-text">
+                    <div class="feature-title">Cached Maps</div>
+                    <div class="feature-desc">View previously loaded map data</div>
+                </div>
+            </div>
+
+            <div class="feature">
+                <div class="feature-icon">🔄</div>
+                <div class="feature-text">
+                    <div class="feature-title">Auto-Sync</div>
+                    <div class="feature-desc">Data will sync when connection is restored</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check online status
+        function updateStatus() {
+            const statusEl = document.getElementById('status');
+            const pulseEl = statusEl.querySelector('.pulse');
+            const textEl = statusEl.querySelector('span');
+
+            if (navigator.onLine) {
+                statusEl.classList.add('online');
+                pulseEl.classList.add('online');
+                textEl.textContent = 'Back Online!';
+                
+                // Reload after a short delay
+                setTimeout(() => {
+                    location.reload();
+                }, 2000);
+            } else {
+                statusEl.classList.remove('online');
+                pulseEl.classList.remove('online');
+                textEl.textContent = 'Offline';
+            }
+        }
+
+        // Listen for online/offline events
+        window.addEventListener('online', updateStatus);
+        window.addEventListener('offline', updateStatus);
+
+        // Check status on load
+        updateStatus();
+
+        // Periodic check
+        setInterval(updateStatus, 5000);
+    </script>
+</body>
+</html>
