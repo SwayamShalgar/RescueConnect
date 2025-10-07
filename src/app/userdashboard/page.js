@@ -1,5 +1,4 @@
 'use client';
-
 import { motion } from 'framer-motion';
 import { useState, useEffect, createContext, useContext } from 'react';
 import { useRouter } from 'next/navigation';
@@ -68,7 +67,7 @@ export default function App() {
   return (
     <LocationContext.Provider value={{ location, setLocation }}>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-100">
-        {/* Language Selector - Top Left */}
+        {/* Language Selector - Top Left - SINGLE INSTANCE FOR ALL PAGES */}
         <div className="fixed top-4 left-4 z-50">
           <GoogleTranslate />
         </div>
@@ -129,15 +128,16 @@ export default function App() {
         {/* Page Content */}
         <div className="pt-24 pb-10 px-4">
           {activePage === 'request' && <RequestPage />}
-          {activePage === 'maps' && <MapsPage rotation={rotation} cloudPosition={cloudPosition} />}
+          {activePage === 'maps' && <MapsPage rotation={rotation} cloudPosition={cloudPosition} hideTranslate={true} />}
           {activePage === 'alert' && <PlaceholderPage title="Emergency Alert" />}
-          {activePage === 'chat' && <LiveChatPage />}
-          {activePage === 'aichat' && <AIChatPage />}
+          {activePage === 'chat' && <LiveChatPage hideTranslate={true} />}
+          {activePage === 'aichat' && <AIChatPage hideTranslate={true} />}
         </div>
       </div>
     </LocationContext.Provider>
   );
 }
+
 
 function RequestPage() {
   const router = useRouter();
@@ -589,7 +589,7 @@ function RequestPage() {
                     <input
                       type="text"
                       placeholder="John Doe"
-                      className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                      className="w-full pl-10 pr-3 py-3 border border-gray-300 text-black rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                       value={name}
                       onChange={(e) => setName(e.target.value.trim())}
                       required
@@ -606,7 +606,7 @@ function RequestPage() {
                     <input
                       type="tel"
                       placeholder="+1 (555) 123-4567"
-                      className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                      className="w-full pl-10 pr-3 py-3 border border-gray-300 text-black rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                       value={contact}
                       onChange={(e) => setContact(e.target.value)}
                       required
@@ -668,7 +668,7 @@ function RequestPage() {
                     </div>
                     <textarea
                       placeholder="Describe your request (e.g., need medical supplies for 10 people)"
-                      className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                      className="w-full pl-10 pr-3 py-3 border border-gray-300 text-black rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                       rows="4"
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
@@ -693,7 +693,7 @@ function RequestPage() {
                         type="number"
                         step="any"
                         placeholder="e.g., 40.7128"
-                        className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                        className="w-full pl-10 pr-3 py-3 border border-gray-300  rounded-xl text-black focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                         value={latitude}
                         onChange={(e) => setLatitude(e.target.value)}
                         required
@@ -711,7 +711,7 @@ function RequestPage() {
                         type="number"
                         step="any"
                         placeholder="e.g., -74.0060"
-                        className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                        className="w-full pl-10 pr-3 py-3 border border-gray-300 text-black rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                         value={longitude}
                         onChange={(e) => setLongitude(e.target.value)}
                         required
@@ -741,7 +741,7 @@ function RequestPage() {
                     <input
                       type="file"
                       accept="image/jpeg,image/png,image/gif"
-                      className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                      className="w-full p-3 border border-gray-300 text-black rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                       onChange={handleImageChange}
                     />
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

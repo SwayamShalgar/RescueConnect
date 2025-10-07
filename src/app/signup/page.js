@@ -470,7 +470,7 @@ export default function SignupPage() {
                                         <input
                                             type="text"
                                             placeholder="John Doe"
-                                            className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                            className="w-full pl-10 pr-3 py-3 border border-gray-300 text-black rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                                             value={name}
                                             onChange={(e) => setName(e.target.value.trim())}
                                             required
@@ -490,7 +490,7 @@ export default function SignupPage() {
                                             <input
                                                 type={showPassword ? "text" : "password"}
                                                 placeholder="Create a password"
-                                                className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                className="w-full pl-10 pr-10 py-3 border border-gray-300 text-black rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                                                 value={password}
                                                 onChange={(e) => setPassword(e.target.value)}
                                                 required
@@ -520,7 +520,7 @@ export default function SignupPage() {
                                             <input
                                                 type={showPassword ? "text" : "password"}
                                                 placeholder="Confirm your password"
-                                                className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                className="w-full pl-10 pr-10 py-3 border border-gray-300 text-black rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                                                 value={confirmPassword}
                                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                                 required
@@ -590,7 +590,7 @@ export default function SignupPage() {
                                         <input
                                             type={contactMethod === 'email' ? "email" : "tel"}
                                             placeholder={contactMethod === 'email' ? "john.doe@example.com" : "+1 (555) 123-4567"}
-                                            className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                            className="w-full pl-10 pr-3 py-3 border border-gray-300 text-black rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                                             value={contact}
                                             onChange={(e) => setContact(e.target.value)}
                                             required
@@ -619,7 +619,7 @@ export default function SignupPage() {
                                         <input
                                             type="text"
                                             placeholder="Medical, Search & Rescue, Logistics, Communications..."
-                                            className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                            className="w-full pl-10 pr-3 py-3 border border-gray-300 text-black rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                                             value={skills}
                                             onChange={(e) => setSkills(e.target.value)}
                                         />
@@ -754,7 +754,7 @@ export default function SignupPage() {
                                         <input
                                             type="number"
                                             placeholder="Enter answer"
-                                            className="w-24 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                            className="w-24 p-2 border border-gray-300 text-black rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                                             value={captchaAnswer}
                                             onChange={(e) => setCaptchaAnswer(e.target.value)}
                                         />
