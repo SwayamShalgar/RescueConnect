@@ -5,6 +5,8 @@
 /.pnp
 .pnp.*
 .yarn/*
+.env.local
+.env.example
 !.yarn/patches
 !.yarn/plugins
 !.yarn/releases
