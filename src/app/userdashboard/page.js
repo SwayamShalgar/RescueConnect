@@ -86,7 +86,7 @@ export default function App() {
     <LocationContext.Provider value={{ location, setLocation }}>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-100">
         {/* Language Selector - Top Left - SINGLE INSTANCE FOR ALL PAGES */}
-        <div className="fixed top-4 left-4 z-50">
+        <div className="fixed top-4 right-10 z-50">
           <GoogleTranslate />
         </div>
 
@@ -148,7 +148,7 @@ export default function App() {
           {activePage === 'request' && <RequestPage />}
           {activePage === 'maps' && <MapsPage rotation={rotation} cloudPosition={cloudPosition} hideTranslate={true} />}
           {activePage === 'alert' && <PlaceholderPage title="Emergency Alert" />}
-          {/* {activePage === 'chat' && <LiveChatPage/>} */}
+          {activePage === 'chat' && <LiveChatPage/>}
           {activePage === 'aichat' && <AIImageRedirect />}
         </div>
       </div>

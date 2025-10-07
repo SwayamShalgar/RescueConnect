@@ -261,9 +261,9 @@ export default function LiveChatPage() {
       animate={{ opacity: 1, y: 0 }}
     >
       {/* Language Selector - Top Right */}
-      <div className="fixed top-2 right-2 sm:top-4 sm:right-4 z-50">
+      {/* <div className="fixed top-2 right-2 sm:top-4 sm:right-4 z-50">
         <GoogleTranslate />
-      </div>
+      </div> */}
 
       <div className="bg-gradient-to-r from-blue-600 to-teal-600 p-3 sm:p-5 rounded-full mb-4 sm:mb-6">
         <FiActivity size={32} className="text-white sm:w-10 sm:h-10" />
