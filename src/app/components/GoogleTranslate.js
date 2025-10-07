@@ -1,13 +1,17 @@
 // Google Translate Widget Component
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { FiGlobe } from 'react-icons/fi';
+
+// Global state to ensure only ONE instance is rendered at a time
+let globalTranslateInstance = null;
 
 export default function GoogleTranslate() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const [elementId] = useState(() => `google_translate_element_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+  const [isMainInstance, setIsMainInstance] = useState(false);
+  const instanceRef = useRef(null);
   
   // Detect current language from cookie
   const getCurrentLangFromCookie = () => {
@@ -29,7 +33,33 @@ export default function GoogleTranslate() {
   
   const [currentLang, setCurrentLang] = useState(getCurrentLangFromCookie());
 
+  // Check if this instance should be the main one
   useEffect(() => {
+    if (!globalTranslateInstance) {
+      globalTranslateInstance = instanceRef;
+      setIsMainInstance(true);
+      console.log('✅ This is the MAIN GoogleTranslate instance');
+    } else {
+      console.log('⚠️ Another GoogleTranslate instance already exists - this one will not render');
+      setIsMainInstance(false);
+    }
+
+    return () => {
+      if (globalTranslateInstance === instanceRef) {
+        globalTranslateInstance = null;
+        console.log('🗑️ Main GoogleTranslate instance unmounted');
+      }
+    };
+  }, []);
+
+  // Don't render if this is not the main instance
+  if (!isMainInstance) {
+    return null;
+  }
+
+  useEffect(() => {
+    if (!isMainInstance) return;
+
     // Check if Google Translate is already fully initialized globally
     if (window.googleTranslateFullyInitialized) {
       console.log('Google Translate already fully initialized globally');
@@ -47,8 +77,8 @@ export default function GoogleTranslate() {
 
     // Initialize Google Translate
     window.googleTranslateElementInit = () => {
-      // Find the first available element
-      const element = document.querySelector('[id^="google_translate_element"]');
+      // Use a consistent ID
+      const element = document.getElementById('google_translate_element_main');
       if (!element) {
         console.error('Google Translate container element not found');
         return;
@@ -67,7 +97,7 @@ export default function GoogleTranslate() {
                 layout: window.google.translate.TranslateElement.InlineLayout.SIMPLE,
                 autoDisplay: false
               },
-              element.id
+              'google_translate_element_main'
             );
           }
           
@@ -152,7 +182,7 @@ export default function GoogleTranslate() {
     return () => {
       // Keep script for performance
     };
-  }, []);
+  }, [isMainInstance]);
 
   const languages = [
     { code: 'en', name: 'English', native: 'English' },
@@ -245,7 +275,7 @@ export default function GoogleTranslate() {
     <>
       {/* Google Translate Container - Hidden but accessible */}
       <div 
-        id={elementId}
+        id="google_translate_element_main"
         style={{ 
           position: 'absolute',
           left: '-9999px',
@@ -389,6 +419,16 @@ export default function GoogleTranslate() {
           visibility: hidden !important;
         }
         .goog-te-menu-value span {
+          display: none !important;
+          visibility: hidden !important;
+        }
+        #google_translate_element_main {
+          display: none !important;
+          visibility: hidden !important;
+          position: absolute !important;
+          left: -9999px !important;
+        }
+        #google_translate_element_main * {
           display: none !important;
           visibility: hidden !important;
         }
