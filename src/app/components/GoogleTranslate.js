@@ -1,17 +1,18 @@
 // Google Translate Widget Component
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { FiGlobe } from 'react-icons/fi';
 
-// Global state to ensure only ONE instance is rendered at a time
-let globalTranslateInstance = null;
+// Global flag to track if an instance is already mounted
+if (typeof window !== 'undefined') {
+  window.__googleTranslateMounted = false;
+}
 
 export default function GoogleTranslate() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const [isMainInstance, setIsMainInstance] = useState(false);
-  const instanceRef = useRef(null);
+  const [shouldRender, setShouldRender] = useState(false);
   
   // Detect current language from cookie
   const getCurrentLangFromCookie = () => {
@@ -31,34 +32,40 @@ export default function GoogleTranslate() {
     return 'en';
   };
   
-  const [currentLang, setCurrentLang] = useState(getCurrentLangFromCookie());
+  const [currentLang, setCurrentLang] = useState(() => {
+    if (typeof window === 'undefined') return 'en';
+    return getCurrentLangFromCookie();
+  });
 
-  // Check if this instance should be the main one
+  // Check if this instance should render
   useEffect(() => {
-    if (!globalTranslateInstance) {
-      globalTranslateInstance = instanceRef;
-      setIsMainInstance(true);
+    if (typeof window === 'undefined') return;
+    
+    if (!window.__googleTranslateMounted) {
+      window.__googleTranslateMounted = true;
+      setShouldRender(true);
       console.log('✅ This is the MAIN GoogleTranslate instance');
     } else {
       console.log('⚠️ Another GoogleTranslate instance already exists - this one will not render');
-      setIsMainInstance(false);
+      setShouldRender(false);
     }
 
     return () => {
-      if (globalTranslateInstance === instanceRef) {
-        globalTranslateInstance = null;
+      if (window.__googleTranslateMounted) {
+        window.__googleTranslateMounted = false;
         console.log('🗑️ Main GoogleTranslate instance unmounted');
       }
     };
   }, []);
 
   // Don't render if this is not the main instance
-  if (!isMainInstance) {
+  if (!shouldRender) {
     return null;
   }
 
   useEffect(() => {
-    if (!isMainInstance) return;
+    if (!shouldRender) return;
+    if (typeof window === 'undefined') return;
 
     // Check if Google Translate is already fully initialized globally
     if (window.googleTranslateFullyInitialized) {
@@ -182,7 +189,7 @@ export default function GoogleTranslate() {
     return () => {
       // Keep script for performance
     };
-  }, [isMainInstance]);
+  }, [shouldRender]);
 
   const languages = [
     { code: 'en', name: 'English', native: 'English' },
@@ -199,76 +206,94 @@ export default function GoogleTranslate() {
   ];
 
   const changeLanguage = (langCode) => {
-    console.log('\n🌐 === LANGUAGE CHANGE REQUEST ===');
-    console.log('Target language:', langCode);
+    if (typeof window === 'undefined') return;
     
-    setIsOpen(false);
-    
-    // Method 1: Try using the select element (fast, no reload)
-    const select = document.querySelector('.goog-te-combo');
-    
-    if (select) {
-      console.log('✅ Method 1: Using select element');
-      console.log('Current value:', select.value);
+    try {
+      console.log('\n🌐 === LANGUAGE CHANGE REQUEST ===');
+      console.log('Target language:', langCode);
       
-      // Set the value
-      select.value = langCode;
+      setIsOpen(false);
       
-      // Trigger change event
-      select.dispatchEvent(new Event('change', { bubbles: true }));
+      // Method 1: Try using the select element (fast, no reload)
+      const select = document.querySelector('.goog-te-combo');
       
-      console.log('✅ Change event dispatched');
-      
-      setCurrentLang(langCode);
-      
-      // Verify translation after a delay
-      setTimeout(() => {
-        const isTranslated = document.querySelector('html.translated-ltr') || 
-                           document.querySelector('html.translated-rtl') ||
-                           document.querySelector('font[style*="vertical-align"]');
+      if (select) {
+        console.log('✅ Method 1: Using select element');
+        console.log('Current value:', select.value);
         
-        console.log('📊 Translation status:', !!isTranslated);
+        // Set the value
+        select.value = langCode;
         
-        if (!isTranslated && langCode !== 'en') {
-          console.log('⚠️ Select method failed, switching to Method 2...');
-          useCookieMethod(langCode);
-        } else {
-          console.log('✅ Translation active via select method');
-        }
-      }, 1500);
-      
-    } else {
-      console.log('⚠️ Select element not found, using Method 2 directly');
+        // Trigger change event
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+        
+        console.log('✅ Change event dispatched');
+        
+        setCurrentLang(langCode);
+        
+        // Verify translation after a delay
+        setTimeout(() => {
+          try {
+            const isTranslated = document.querySelector('html.translated-ltr') || 
+                               document.querySelector('html.translated-rtl') ||
+                               document.querySelector('font[style*="vertical-align"]');
+            
+            console.log('📊 Translation status:', !!isTranslated);
+            
+            if (!isTranslated && langCode !== 'en') {
+              console.log('⚠️ Select method failed, switching to Method 2...');
+              useCookieMethod(langCode);
+            } else {
+              console.log('✅ Translation active via select method');
+            }
+          } catch (err) {
+            console.warn('Error verifying translation:', err);
+          }
+        }, 1500);
+        
+      } else {
+        console.log('⚠️ Select element not found, using Method 2 directly');
+        useCookieMethod(langCode);
+      }
+    } catch (error) {
+      console.error('Error changing language:', error);
+      // Fallback to cookie method
       useCookieMethod(langCode);
     }
   };
   
   const useCookieMethod = (langCode) => {
-    console.log('🍪 Method 2: Using cookie + reload method');
+    if (typeof window === 'undefined') return;
     
-    // Clear old cookie first
-    document.cookie = 'googtrans=; path=/; max-age=0';
-    document.cookie = `googtrans=; path=/; domain=${window.location.hostname}; max-age=0`;
-    
-    if (langCode !== 'en') {
-      // Set new language cookie
-      const langPair = `/en/${langCode}`;
-      document.cookie = `googtrans=${langPair}; path=/;`;
-      document.cookie = `googtrans=${langPair}; path=/; domain=${window.location.hostname};`;
-      console.log('✅ Cookie set to:', langPair);
-    } else {
-      console.log('✅ Cookie cleared (returning to English)');
+    try {
+      console.log('🍪 Method 2: Using cookie + reload method');
+      
+      // Clear old cookie first
+      document.cookie = 'googtrans=; path=/; max-age=0';
+      document.cookie = `googtrans=; path=/; domain=${window.location.hostname}; max-age=0`;
+      
+      if (langCode !== 'en') {
+        // Set new language cookie
+        const langPair = `/en/${langCode}`;
+        document.cookie = `googtrans=${langPair}; path=/;`;
+        document.cookie = `googtrans=${langPair}; path=/; domain=${window.location.hostname};`;
+        console.log('✅ Cookie set to:', langPair);
+      } else {
+        console.log('✅ Cookie cleared (returning to English)');
+      }
+      
+      setCurrentLang(langCode);
+      
+      console.log('🔄 Reloading page in 500ms...');
+      console.log('=================================\n');
+      
+      // Reload the page
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+    } catch (error) {
+      console.error('Error in cookie method:', error);
     }
-    
-    setCurrentLang(langCode);
-    
-    console.log('🔄 Reloading page in 500ms...');
-    console.log('=================================\n');
-    
-    // Reload the page
-    setTimeout(() => {
-      window.location.reload();
-    }, 500);
   };
 
   return (
