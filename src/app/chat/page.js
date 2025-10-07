@@ -512,7 +512,7 @@ export default function LiveChatPage() {
           <input
             type="text"
             placeholder="Type a message..."
-            className="flex-1 px-2 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+            className="flex-1 px-2 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 text-black rounded-xl focus:ring-2 focus:ring-blue-500"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && sendMessage()}

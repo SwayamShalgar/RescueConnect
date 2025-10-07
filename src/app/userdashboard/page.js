@@ -20,6 +20,24 @@ const LocationContext = createContext({
   setLocation: () => {},
 });
 
+// Component to redirect to AI Image page
+function AIImageRedirect() {
+  const router = useRouter();
+  
+  useEffect(() => {
+    router.push('/ai-image');
+  }, [router]);
+
+  return (
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="text-center">
+        <FiActivity className="animate-spin text-blue-600 mx-auto mb-4" size={48} />
+        <p className="text-gray-600 text-lg">Redirecting to AI Image Analysis...</p>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [activePage, setActivePage] = useState('request');
   const [isNavOpen, setIsNavOpen] = useState(false);
@@ -131,7 +149,7 @@ export default function App() {
           {activePage === 'maps' && <MapsPage rotation={rotation} cloudPosition={cloudPosition} hideTranslate={true} />}
           {activePage === 'alert' && <PlaceholderPage title="Emergency Alert" />}
           {/* {activePage === 'chat' && <LiveChatPage/>} */}
-          {activePage === 'aichat' && <AIChatPage />}
+          {activePage === 'aichat' && <AIImageRedirect />}
         </div>
       </div>
     </LocationContext.Provider>
