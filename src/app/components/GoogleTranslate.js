@@ -41,8 +41,11 @@ export default function GoogleTranslate() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     
+    let isThisInstanceMain = false;
+    
     if (!window.__googleTranslateMounted) {
       window.__googleTranslateMounted = true;
+      isThisInstanceMain = true;
       setShouldRender(true);
       console.log('✅ This is the MAIN GoogleTranslate instance');
     } else {
@@ -51,7 +54,8 @@ export default function GoogleTranslate() {
     }
 
     return () => {
-      if (window.__googleTranslateMounted) {
+      // Only reset if THIS instance was the main one
+      if (isThisInstanceMain && window.__googleTranslateMounted) {
         window.__googleTranslateMounted = false;
         console.log('🗑️ Main GoogleTranslate instance unmounted');
       }
