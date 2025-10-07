@@ -26,12 +26,12 @@ export default function SignupPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [activeStep, setActiveStep] = useState(1);
     const [contactMethod, setContactMethod] = useState('email');
-    const [currentDateTime, setCurrentDateTime] = useState(new Date());
+    const [currentDateTime, setCurrentDateTime] = useState(null);
     const [isMounted, setIsMounted] = useState(false);
 
     // CAPTCHA states
-    const [captchaNum1, setCaptchaNum1] = useState(Math.floor(Math.random() * 10));
-    const [captchaNum2, setCaptchaNum2] = useState(Math.floor(Math.random() * 10));
+    const [captchaNum1, setCaptchaNum1] = useState(0);
+    const [captchaNum2, setCaptchaNum2] = useState(0);
     const [captchaAnswer, setCaptchaAnswer] = useState('');
     const [captchaError, setCaptchaError] = useState('');
     
@@ -100,6 +100,11 @@ export default function SignupPage() {
     // Update current date and time every second (client-side only)
     useEffect(() => {
         setIsMounted(true);
+        setCurrentDateTime(new Date()); // Set initial date on mount
+        // Initialize CAPTCHA on mount to avoid hydration mismatch
+        setCaptchaNum1(Math.floor(Math.random() * 10));
+        setCaptchaNum2(Math.floor(Math.random() * 10));
+        
         const timer = setInterval(() => {
             setCurrentDateTime(new Date());
         }, 1000);
@@ -410,7 +415,7 @@ export default function SignupPage() {
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.4 }}
                     >
-                        Join our emergency response team{isMounted && ` as of ${currentDateTime.toLocaleTimeString('en-IN', { 
+                        Join our emergency response team{isMounted && currentDateTime && ` as of ${currentDateTime.toLocaleTimeString('en-IN', { 
                             hour: '2-digit', 
                             minute: '2-digit',
                             hour12: true 

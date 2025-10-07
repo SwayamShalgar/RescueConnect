@@ -13,7 +13,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loginMethod, setLoginMethod] = useState('email'); // 'email' or 'phone'
-  const [currentDateTime, setCurrentDateTime] = useState(new Date());
+  const [currentDateTime, setCurrentDateTime] = useState(null);
   const [isMounted, setIsMounted] = useState(false);
 
   // Validation functions
@@ -43,6 +43,7 @@ export default function LoginPage() {
   // Update current date and time every second (client-side only)
   useEffect(() => {
     setIsMounted(true);
+    setCurrentDateTime(new Date()); // Set initial date on mount
     const timer = setInterval(() => {
       setCurrentDateTime(new Date());
     }, 1000);
@@ -145,7 +146,7 @@ export default function LoginPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.5 }}
           >
-            Sign in to your Disaster Response account{isMounted && ` as of ${currentDateTime.toLocaleTimeString('en-IN', { 
+            Sign in to your Disaster Response account{isMounted && currentDateTime && ` as of ${currentDateTime.toLocaleTimeString('en-IN', { 
               hour: '2-digit', 
               minute: '2-digit',
               hour12: true 

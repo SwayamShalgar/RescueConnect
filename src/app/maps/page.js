@@ -25,7 +25,7 @@ export default function MapsPage() {
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
   const [locationError, setLocationError] = useState(null);
-  const [currentDateTime, setCurrentDateTime] = useState(new Date());
+  const [currentDateTime, setCurrentDateTime] = useState(null);
   const [isMounted, setIsMounted] = useState(false);
   const mapRef = useRef(null); // Reference to the Leaflet map
 
@@ -162,6 +162,7 @@ export default function MapsPage() {
   // Update current date and time every second (client-side only)
   useEffect(() => {
     setIsMounted(true);
+    setCurrentDateTime(new Date()); // Set initial date on mount
     const timer = setInterval(() => {
       setCurrentDateTime(new Date());
     }, 1000);
@@ -182,23 +183,23 @@ export default function MapsPage() {
   };
 
   return (
-    <div className="flex flex-col items-center min-h-screen p-4">
+    <div className="flex flex-col items-center min-h-screen p-2 sm:p-4">
       {/* Language Selector - Top Right */}
-      <div className="fixed top-4 right-4 z-50">
+      <div className="fixed top-2 right-2 sm:top-4 sm:right-4 z-50">
         {isMounted && <GoogleTranslate />}
       </div>
 
       <motion.div
-        className="bg-gradient-to-r from-blue-600 to-teal-600 p-5 rounded-full mb-6"
+        className="bg-gradient-to-r from-blue-600 to-teal-600 p-3 sm:p-5 rounded-full mb-4 sm:mb-6"
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.8, type: 'spring' }}
       >
-        <FiActivity size={40} className="text-white" />
+        <FiActivity size={32} className="text-white sm:w-10 sm:h-10" />
       </motion.div>
-      <h2 className="text-3xl font-bold text-gray-800 mb-4">Local Disaster and Request Map</h2>
-      <p className="text-gray-600 max-w-md text-center mb-8">
-        Real-time visualization of ongoing disaster events and pending/emergency requests near your location{isMounted && ` as of ${currentDateTime.toLocaleTimeString('en-IN', { 
+      <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 mb-2 sm:mb-4 text-center px-2">Local Disaster and Request Map</h2>
+      <p className="text-sm sm:text-base text-gray-600 max-w-md text-center mb-4 sm:mb-8 px-4">
+        Real-time visualization of ongoing disaster events and pending/emergency requests near your location{isMounted && currentDateTime && ` as of ${currentDateTime.toLocaleTimeString('en-IN', { 
           hour: '2-digit', 
           minute: '2-digit',
           hour12: true 
@@ -213,7 +214,7 @@ export default function MapsPage() {
       {/* Location Error Message */}
       {locationError && (
         <motion.div
-          className="text-yellow-600 mb-4"
+          className="text-yellow-600 mb-2 sm:mb-4 text-sm sm:text-base text-center px-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
         >
@@ -224,7 +225,7 @@ export default function MapsPage() {
       {/* API Error Message */}
       {error && (
         <motion.div
-          className="text-red-500 mb-4"
+          className="text-red-500 mb-2 sm:mb-4 text-sm sm:text-base text-center px-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
         >
@@ -235,7 +236,7 @@ export default function MapsPage() {
       {/* Loading State */}
       {(isLoading || !isMapLoaded) && (
         <motion.div
-          className="text-gray-600 mb-4"
+          className="text-gray-600 mb-2 sm:mb-4 text-sm sm:text-base"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
         >
@@ -246,7 +247,7 @@ export default function MapsPage() {
 
       {/* Leaflet Map */}
       <motion.div
-        className="w-full max-w-4xl h-[500px] mb-8"
+        className="w-full max-w-4xl h-[300px] sm:h-[400px] md:h-[500px] mb-4 sm:mb-8 px-2"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
@@ -263,26 +264,26 @@ export default function MapsPage() {
 
       {/* Legend for Severity and Requests */}
       <motion.div
-        className="flex justify-center gap-4 mb-8"
+        className="flex flex-col sm:flex-row flex-wrap justify-center gap-2 sm:gap-4 mb-4 sm:mb-8 px-4"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.7 }}
       >
         <div className="flex items-center">
-          <div className="w-4 h-4 bg-red-500 rounded-full mr-2"></div>
-          <span className="text-gray-600">High Severity Disaster</span>
+          <div className="w-3 h-3 sm:w-4 sm:h-4 bg-red-500 rounded-full mr-1 sm:mr-2"></div>
+          <span className="text-xs sm:text-sm text-gray-600">High Severity Disaster</span>
         </div>
         <div className="flex items-center">
-          <div className="w-4 h-4 bg-yellow-500 rounded-full mr-2"></div>
-          <span className="text-gray-600">Medium Severity Disaster</span>
+          <div className="w-3 h-3 sm:w-4 sm:h-4 bg-yellow-500 rounded-full mr-1 sm:mr-2"></div>
+          <span className="text-xs sm:text-sm text-gray-600">Medium Severity Disaster</span>
         </div>
         <div className="flex items-center">
-          <div className="w-4 h-4 bg-green-500 rounded-full mr-2"></div>
-          <span className="text-gray-600">Low Severity Disaster</span>
+          <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-500 rounded-full mr-1 sm:mr-2"></div>
+          <span className="text-xs sm:text-sm text-gray-600">Low Severity Disaster</span>
         </div>
         <div className="flex items-center">
-          <div className="w-4 h-4 bg-blue-500 rounded-full mr-2"></div>
-          <span className="text-gray-600">Pending/Emergency Request</span>
+          <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-500 rounded-full mr-1 sm:mr-2"></div>
+          <span className="text-xs sm:text-sm text-gray-600">Pending/Emergency Request</span>
         </div>
       </motion.div>
 
@@ -291,11 +292,12 @@ export default function MapsPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.9 }}
+        className="px-4"
       >
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="py-3 px-6 bg-gradient-to-r from-blue-600 to-teal-600 text-white rounded-xl shadow-md"
+          className="py-2 sm:py-3 px-4 sm:px-6 bg-gradient-to-r from-blue-600 to-teal-600 text-white rounded-xl shadow-md text-sm sm:text-base w-full sm:w-auto"
           onClick={() => setShowDisasters(!showDisasters)}
         >
           {showDisasters ? 'Hide Nearby Disasters and Requests' : 'View Nearby Disasters and Requests'}

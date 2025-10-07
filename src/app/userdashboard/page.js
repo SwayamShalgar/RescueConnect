@@ -130,8 +130,8 @@ export default function App() {
           {activePage === 'request' && <RequestPage />}
           {activePage === 'maps' && <MapsPage rotation={rotation} cloudPosition={cloudPosition} hideTranslate={true} />}
           {activePage === 'alert' && <PlaceholderPage title="Emergency Alert" />}
-          {activePage === 'chat' && <LiveChatPage hideTranslate={true} />}
-          {activePage === 'aichat' && <AIChatPage hideTranslate={true} />}
+          {/* {activePage === 'chat' && <LiveChatPage/>} */}
+          {activePage === 'aichat' && <AIChatPage />}
         </div>
       </div>
     </LocationContext.Provider>

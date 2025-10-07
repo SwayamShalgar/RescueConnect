@@ -256,44 +256,44 @@ export default function LiveChatPage() {
 
   return (
     <motion.div
-      className="flex flex-col items-center min-h-screen p-4"
+      className="flex flex-col items-center min-h-screen p-2 sm:p-4"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
     >
       {/* Language Selector - Top Right */}
-      <div className="fixed top-4 right-4 z-50">
+      <div className="fixed top-2 right-2 sm:top-4 sm:right-4 z-50">
         <GoogleTranslate />
       </div>
 
-      <div className="bg-gradient-to-r from-blue-600 to-teal-600 p-5 rounded-full mb-6">
-        <FiActivity size={40} className="text-white" />
+      <div className="bg-gradient-to-r from-blue-600 to-teal-600 p-3 sm:p-5 rounded-full mb-4 sm:mb-6">
+        <FiActivity size={32} className="text-white sm:w-10 sm:h-10" />
       </div>
-      <h2 className="text-3xl font-bold text-gray-800 mb-4">Live Chat</h2>
-      <p className="text-gray-600 max-w-md text-center mb-8">
+      <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2 sm:mb-4 text-center px-2">Live Chat</h2>
+      <p className="text-sm sm:text-base text-gray-600 max-w-md text-center mb-4 sm:mb-8 px-4">
         Real-time communication with disaster response teams and volunteers
       </p>
 
       {/* Location Info */}
       {userLocation.city && (
-        <div className="flex items-center text-gray-600 mb-4">
-          <FiMapPin className="mr-2" />
+        <div className="flex items-center text-sm sm:text-base text-gray-600 mb-2 sm:mb-4">
+          <FiMapPin className="mr-1 sm:mr-2" />
           <span>You are chatting from: {userLocation.city}</span>
         </div>
       )}
 
       {/* Group Selection - Two Sections */}
-      <div className="w-full max-w-4xl mb-6">
+      <div className="w-full max-w-4xl mb-4 sm:mb-6 px-2 sm:px-0">
         {/* Section 1: Your City Group */}
-        <div className="mb-6">
-          <h3 className="text-xl font-bold text-gray-800 mb-3 flex items-center">
-            <FiMapPin className="mr-2 text-blue-600" />
+        <div className="mb-4 sm:mb-6">
+          <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-2 sm:mb-3 flex items-center">
+            <FiMapPin className="mr-1 sm:mr-2 text-blue-600" />
             Your City Group
           </h3>
           {userLocation.city && (
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className={`w-full px-6 py-4 rounded-xl flex items-center justify-between shadow-lg ${
+              className={`w-full px-4 sm:px-6 py-3 sm:py-4 rounded-xl flex items-center justify-between shadow-lg ${
                 currentGroup === `${userLocation.city} Group`
                   ? 'bg-gradient-to-r from-blue-600 to-teal-600 text-white'
                   : 'bg-white border-2 border-blue-200 text-gray-700 hover:border-blue-400'
@@ -301,9 +301,9 @@ export default function LiveChatPage() {
               onClick={() => joinGroup(`${userLocation.city} Group`)}
               disabled={!ws || ws.readyState !== WebSocket.OPEN}
             >
-              <span className="font-semibold text-lg">{userLocation.city} Group</span>
+              <span className="font-semibold text-base sm:text-lg">{userLocation.city} Group</span>
               {groupMessages[`${userLocation.city} Group`]?.length > 0 && (
-                <span className={`text-sm px-3 py-1 rounded-full ${
+                <span className={`text-xs sm:text-sm px-2 sm:px-3 py-1 rounded-full ${
                   currentGroup === `${userLocation.city} Group`
                     ? 'bg-white text-blue-600'
                     : 'bg-blue-600 text-white'
@@ -317,8 +317,8 @@ export default function LiveChatPage() {
 
         {/* Section 2: Other Cities Dropdown */}
         <div ref={dropdownRef} className="relative">
-          <h3 className="text-xl font-bold text-gray-800 mb-3 flex items-center">
-            <FiUsers className="mr-2 text-teal-600" />
+          <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-2 sm:mb-3 flex items-center">
+            <FiUsers className="mr-1 sm:mr-2 text-teal-600" />
             Other Cities
           </h3>
           
@@ -326,11 +326,11 @@ export default function LiveChatPage() {
           <motion.button
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
-            className="w-full px-6 py-4 bg-white border-2 border-teal-200 rounded-xl flex items-center justify-between hover:border-teal-400 transition-colors shadow-md"
+            className="w-full px-4 sm:px-6 py-3 sm:py-4 bg-white border-2 border-teal-200 rounded-xl flex items-center justify-between hover:border-teal-400 transition-colors shadow-md"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             disabled={!ws || ws.readyState !== WebSocket.OPEN}
           >
-            <span className="font-semibold text-gray-700">
+            <span className="font-semibold text-sm sm:text-base text-gray-700 truncate mr-2">
               {currentGroup && currentGroup !== `${userLocation.city} Group`
                 ? currentGroup
                 : 'Select a city group'}
@@ -429,7 +429,7 @@ export default function LiveChatPage() {
       </div>
 
       {/* User List */}
-      <div className="w-full max-w-md mb-6">
+      <div className="w-full max-w-md mb-4 sm:mb-6 px-2 sm:px-0">
         {(() => {
           // Extract city name from current group (format: "CityName Group")
           const groupCity = currentGroup ? currentGroup.replace(' Group', '') : null;
@@ -440,22 +440,22 @@ export default function LiveChatPage() {
           
           return (
             <>
-              <h3 className="text-lg font-semibold text-gray-800 mb-2 flex items-center">
-                <FiUsers className="mr-2" />
-                Online Users in {currentGroup || 'Chat'} ({filteredUsers.length})
+              <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2 flex items-center">
+                <FiUsers className="mr-1 sm:mr-2" />
+                <span className="truncate">Online Users in {currentGroup || 'Chat'} ({filteredUsers.length})</span>
               </h3>
-              <div className="bg-gray-50 p-4 rounded-xl max-h-32 overflow-y-auto">
+              <div className="bg-gray-50 p-3 sm:p-4 rounded-xl max-h-32 overflow-y-auto">
                 {filteredUsers.length > 0 ? (
                   filteredUsers.map((user, index) => (
                     <div 
                       key={index} 
-                      className={`text-gray-700 ${user.username === username ? 'font-bold text-blue-600' : ''}`}
+                      className={`text-sm sm:text-base text-gray-700 ${user.username === username ? 'font-bold text-blue-600' : ''}`}
                     >
                       {user.username} ({user.city}) {user.username === username ? '(You)' : ''}
                     </div>
                   ))
                 ) : (
-                  <div className="text-gray-500">No users online from {groupCity || 'this group'}</div>
+                  <div className="text-sm sm:text-base text-gray-500">No users online from {groupCity || 'this group'}</div>
                 )}
               </div>
             </>
@@ -464,13 +464,13 @@ export default function LiveChatPage() {
       </div>
 
       {/* Chat Area */}
-      <div className="w-full max-w-md bg-white rounded-xl shadow-md p-4 mb-6">
-        <div className="bg-gradient-to-r from-blue-600 to-teal-600 text-white p-3 rounded-t-xl -mx-4 -mt-4 mb-4">
-          <h3 className="font-semibold text-center">
+      <div className="w-full max-w-md bg-white rounded-xl shadow-md p-2 sm:p-4 mb-4 sm:mb-6 mx-2 sm:mx-0">
+        <div className="bg-gradient-to-r from-blue-600 to-teal-600 text-white p-2 sm:p-3 rounded-t-xl -mx-2 sm:-mx-4 -mt-2 sm:-mt-4 mb-2 sm:mb-4">
+          <h3 className="font-semibold text-sm sm:text-base text-center truncate px-2">
             {currentGroup || 'Select a group to start chatting'}
           </h3>
         </div>
-        <div className="h-96 overflow-y-auto p-4 space-y-3">
+        <div className="h-64 sm:h-96 overflow-y-auto p-2 sm:p-4 space-y-2 sm:space-y-3">
           {messages.length > 0 ? (
             messages.map((msg, index) => {
               const isOwnMessage = msg.userId === userId;
@@ -479,20 +479,20 @@ export default function LiveChatPage() {
                   key={index}
                   className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
                 >
-                  <div className={`max-w-[70%]`}>
+                  <div className={`max-w-[85%] sm:max-w-[70%]`}>
                     {!isOwnMessage && (
                       <div className="text-xs text-gray-600 mb-1 ml-2">
                         {msg.username}
                       </div>
                     )}
                     <div
-                      className={`p-3 rounded-2xl ${
+                      className={`p-2 sm:p-3 rounded-2xl ${
                         isOwnMessage
                           ? 'bg-blue-600 text-white rounded-br-sm'
                           : 'bg-gray-200 text-gray-800 rounded-bl-sm'
                       }`}
                     >
-                      <div className="break-words">{msg.text}</div>
+                      <div className="break-words text-sm sm:text-base">{msg.text}</div>
                       <div className={`text-xs ${isOwnMessage ? 'text-blue-100' : 'text-gray-500'} mt-1`}>
                         {msg.timestamp}
                       </div>
@@ -502,17 +502,17 @@ export default function LiveChatPage() {
               );
             })
           ) : (
-            <div className="text-center text-gray-400 mt-20">
+            <div className="text-center text-sm sm:text-base text-gray-400 mt-16 sm:mt-20">
               No messages yet. Start the conversation!
             </div>
           )}
           <div ref={messagesEndRef} />
         </div>
-        <div className="flex items-center p-2 border-t border-gray-200">
+        <div className="flex items-center p-2 border-t border-gray-200 gap-1 sm:gap-2">
           <input
             type="text"
             placeholder="Type a message..."
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+            className="flex-1 px-2 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
@@ -521,11 +521,11 @@ export default function LiveChatPage() {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="ml-2 px-4 py-2 bg-blue-600 text-white rounded-xl flex items-center"
+            className="px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-xl flex items-center"
             onClick={sendMessage}
             disabled={!ws || ws.readyState !== WebSocket.OPEN}
           >
-            <FiSend />
+            <FiSend className="w-4 h-4 sm:w-5 sm:h-5" />
           </motion.button>
         </div>
       </div>

@@ -305,15 +305,15 @@ export default function AIChatPage() {
           <h3 className="text-lg font-semibold text-gray-800 mb-2">Current Weather in {userLocation.city}</h3>
           <div className="flex items-center space-x-4">
             <FiThermometer className="text-blue-600" size={24} />
-            <span>{weatherData.current?.temperature_2m ?? 'N/A'}°C</span>
+            <span className='text-black'>{weatherData.current?.temperature_2m ?? 'N/A'}°C</span>
             <FiDroplet className="text-blue-600" size={24} />
-            <span>{weatherData.current?.precipitation ?? 'N/A'} mm</span>
+            <span className='text-black'>{weatherData.current?.precipitation ?? 'N/A'} mm</span>
             <FiWind className="text-blue-600" size={24} />
-            <span>{weatherData.current?.wind_speed_10m ?? 'N/A'} km/h</span>
+            <span className='text-black'>{weatherData.current?.wind_speed_10m ?? 'N/A'} km/h</span>
           </div>
           <div className="mt-2 flex items-center">
             <FiAlertTriangle className="text-red-600 mr-2" size={20} />
-            <span>Risk Level: {riskLevel ?? 'N/A'}</span>
+            <span className='text-black'>Risk Level: {riskLevel ?? 'N/A'}</span>
           </div>
         </motion.div>
       )}
@@ -344,7 +344,7 @@ export default function AIChatPage() {
           <input
             type="text"
             placeholder="Ask about weather, preparedness, or type 'checklist'..."
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+            className="flex-1 px-4 py-2 border border-gray-300 text-black rounded-xl focus:ring-2 focus:ring-blue-500"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
