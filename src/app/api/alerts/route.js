@@ -1,13 +1,18 @@
 import { Pool } from 'pg';
-import twilio from 'twilio';
+import nodemailer from 'nodemailer';
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-const twilioClient = process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN
-  ? twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
-  : null;
+// Set up Nodemailer transporter for email alerts
+const transporter = nodemailer.createTransport({
+  service: 'Gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 
 export async function POST(request) {
   try {
@@ -36,29 +41,61 @@ export async function POST(request) {
       );
     }
 
-    // 2. Send notifications
+    // 2. Send email notifications
     const sentResults = [];
+    const alertMessage = message || `EMERGENCY: ${emergencyType}\n${description || ''}`;
     
-    if (twilioClient) {
+    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
       for (const recipient of allRecipients) {
         try {
-          await twilioClient.messages.create({
-            body: message || `EMERGENCY: ${emergencyType}\n${description || ''}`,
-            from: process.env.TWILIO_PHONE_NUMBER,
-            to: recipient.contact
-          });
-          sentResults.push({ success: true, contact: recipient.contact, type: recipient.type });
+          // Check if contact is an email address
+          const isEmail = recipient.contact && recipient.contact.includes('@');
+          
+          if (isEmail) {
+            await transporter.sendMail({
+              from: process.env.EMAIL_USER,
+              to: recipient.contact,
+              subject: `🚨 EMERGENCY ALERT: ${emergencyType}`,
+              html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #fee2e2; border: 2px solid #dc2626;">
+                  <div style="background-color: #dc2626; color: white; padding: 20px; border-radius: 8px; text-align: center;">
+                    <h1 style="margin: 0;">🚨 EMERGENCY ALERT</h1>
+                  </div>
+                  <div style="background-color: white; padding: 30px; border-radius: 8px; margin-top: 20px;">
+                    <h2 style="color: #dc2626;">Emergency Type: ${emergencyType}</h2>
+                    <p style="font-size: 16px; line-height: 1.6; color: #333;">
+                      ${description || 'No additional details provided.'}
+                    </p>
+                    <div style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0;">
+                      <p style="margin: 0; color: #991b1b; font-size: 14px;">
+                        <strong>Alert Message:</strong><br>
+                        ${alertMessage}
+                      </p>
+                    </div>
+                    <p style="font-size: 14px; color: #666; margin-top: 20px;">
+                      If you are a volunteer, please respond immediately if you can assist.
+                    </p>
+                  </div>
+                </div>
+              `
+            });
+            sentResults.push({ success: true, contact: recipient.contact, type: recipient.type });
+          } else {
+            // For phone numbers, log instead (SMS requires MSG91 or similar service)
+            console.log(`Alert logged for ${recipient.type} ${recipient.contact}: ${alertMessage}`);
+            sentResults.push({ success: true, contact: recipient.contact, type: recipient.type, method: 'logged' });
+          }
         } catch (error) {
           console.error(`Failed to notify ${recipient.type} ${recipient.contact}:`, error);
           sentResults.push({ success: false, contact: recipient.contact, type: recipient.type, error: error.message });
         }
       }
     } else {
-      console.log('=== SIMULATED ALERT ===');
-      console.log('Message:', message || `EMERGENCY: ${emergencyType}\n${description || ''}`);
+      console.log('=== SIMULATED ALERT (Email not configured) ===');
+      console.log('Message:', alertMessage);
       allRecipients.forEach(r => {
         console.log(`-> To ${r.type}: ${r.contact}`);
-        sentResults.push({ success: true, contact: r.contact, type: r.type });
+        sentResults.push({ success: true, contact: r.contact, type: r.type, method: 'simulated' });
       });
     }
 
