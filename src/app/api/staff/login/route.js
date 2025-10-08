@@ -49,37 +49,50 @@ export async function POST(req) {
     // Update volunteer's location if provided
     if (latitude && longitude && !isNaN(latitude) && !isNaN(longitude)) {
       try {
-        // Check which optional columns exist
-        const checkColumnsQuery = `
-          SELECT column_name 
-          FROM information_schema.columns 
-          WHERE table_name = 'volunteers' 
-          AND column_name IN ('status', 'last_login')
+        // Check for duplicate coordinates (excluding current volunteer)
+        const checkDuplicateQuery = `
+          SELECT id, name FROM volunteers 
+          WHERE lat = $1 AND long = $2 AND id != $3
+          LIMIT 1
         `;
-        const columnCheck = await client.query(checkColumnsQuery);
-        const existingColumns = columnCheck.rows.map(row => row.column_name);
-        const hasStatusColumn = existingColumns.includes('status');
-        const hasLastLoginColumn = existingColumns.includes('last_login');
+        const duplicateCheck = await client.query(checkDuplicateQuery, [latitude, longitude, volunteer.id]);
+        
+        if (duplicateCheck.rows.length > 0) {
+          console.log('Duplicate coordinates detected during login, skipping location update');
+          // Continue with login but skip location update
+        } else {
+          // Check which optional columns exist
+          const checkColumnsQuery = `
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name = 'volunteers' 
+            AND column_name IN ('status', 'last_login')
+          `;
+          const columnCheck = await client.query(checkColumnsQuery);
+          const existingColumns = columnCheck.rows.map(row => row.column_name);
+          const hasStatusColumn = existingColumns.includes('status');
+          const hasLastLoginColumn = existingColumns.includes('last_login');
 
-        // Build UPDATE query dynamically
-        let updateFields = 'lat = $1, long = $2';
-        
-        if (hasStatusColumn) {
-          updateFields += ", status = 'available'";
+          // Build UPDATE query dynamically
+          let updateFields = 'lat = $1, long = $2';
+          
+          if (hasStatusColumn) {
+            updateFields += ", status = 'available'";
+          }
+          
+          if (hasLastLoginColumn) {
+            updateFields += ', last_login = NOW()';
+          }
+          
+          const updateLocationQuery = `
+            UPDATE volunteers 
+            SET ${updateFields}
+            WHERE id = $3
+          `;
+          
+          await client.query(updateLocationQuery, [latitude, longitude, volunteer.id]);
+          console.log('Location updated successfully:', latitude, longitude);
         }
-        
-        if (hasLastLoginColumn) {
-          updateFields += ', last_login = NOW()';
-        }
-        
-        const updateLocationQuery = `
-          UPDATE volunteers 
-          SET ${updateFields}
-          WHERE id = $3
-        `;
-        
-        await client.query(updateLocationQuery, [latitude, longitude, volunteer.id]);
-        console.log('Location updated successfully:', latitude, longitude);
       } catch (locationError) {
         console.error('Failed to update location:', locationError.message);
         // Continue with login even if location update fails

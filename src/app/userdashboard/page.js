@@ -421,7 +421,15 @@ function RequestPage() {
         throw new Error('Server did not return valid JSON');
       }
 
-      if (!res.ok) throw new Error(data.message || 'Request submission failed');
+      if (!res.ok) {
+        // Check if it's a duplicate location error
+        if (res.status === 400 && data.message && data.message.includes('same latitude and longitude')) {
+          alert('⚠️ Duplicate Location Detected\n\nA request at this exact location already exists in the system.\n\nPlease verify your coordinates or adjust your location slightly.');
+          setIsLoading(false);
+          return;
+        }
+        throw new Error(data.message || 'Request submission failed');
+      }
 
       alert('✅ Request submitted successfully!');
       resetForm();

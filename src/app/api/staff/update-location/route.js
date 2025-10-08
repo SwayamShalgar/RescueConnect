@@ -33,6 +33,22 @@ export async function POST(req) {
     const client = await pool.connect();
 
     try {
+      // Check for duplicate coordinates (excluding current volunteer)
+      const checkDuplicateQuery = `
+        SELECT id, name FROM volunteers 
+        WHERE lat = $1 AND long = $2 AND id != $3
+        LIMIT 1
+      `;
+      const duplicateCheck = await client.query(checkDuplicateQuery, [latitude, longitude, volunteerId]);
+      
+      if (duplicateCheck.rows.length > 0) {
+        client.release();
+        return NextResponse.json({ 
+          message: "A volunteer is already registered at this exact location. Please verify your coordinates.",
+          duplicate: true
+        }, { status: 409 });
+      }
+
       // Check which optional columns exist
       const checkColumnsQuery = `
         SELECT column_name 

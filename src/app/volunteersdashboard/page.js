@@ -92,7 +92,7 @@ export default function VolunteersDashboard() {
           const token = localStorage.getItem('token');
           if (token) {
             // Update location on server
-            await fetch('/api/staff/update-location', {
+            const response = await fetch('/api/staff/update-location', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -100,7 +100,18 @@ export default function VolunteersDashboard() {
               },
               body: JSON.stringify({ latitude, longitude })
             });
-            console.log('Location updated:', latitude, longitude);
+            
+            const data = await response.json();
+            
+            if (response.status === 409 && data.duplicate) {
+              // Show alert for duplicate coordinates
+              alert('⚠️ Duplicate Location Detected\n\nAnother volunteer is already registered at this exact location. Your location was not updated.\n\nPlease verify your coordinates or move to a different location.');
+              console.warn('Duplicate coordinates detected:', latitude, longitude);
+            } else if (response.ok) {
+              console.log('Location updated:', latitude, longitude);
+            } else {
+              console.warn('Location update failed:', data.message);
+            }
           }
         } catch (error) {
           console.warn('Could not update location:', error.message);
@@ -170,22 +181,33 @@ export default function VolunteersDashboard() {
         body: JSON.stringify({ requestId }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to mark request as completed');
+      // Try to parse response as JSON
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error('Error parsing response:', parseError);
+        throw new Error('Invalid response from server');
       }
 
-      setRequests((prevRequests) =>
-        prevRequests.map((req) =>
-          req.id === requestId
-            ? { ...req, status: 'completed' }
-            : req
-        )
-      );
-      setSuccess('Request marked as completed.');
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to complete and delete request');
+      }
+
+      // Check if operation was successful
+      if (data.success !== false) {
+        // Remove the request from the list (it's been deleted from database)
+        setRequests((prevRequests) =>
+          prevRequests.filter((req) => req.id !== requestId)
+        );
+        setSuccess('Request completed and removed from database.');
+      } else {
+        throw new Error(data.error || 'Completion operation failed');
+      }
     } catch (error) {
-      console.error('Error marking request as completed:', error);
-      setError(error.message);
+      console.error('Error completing request:', error);
+      console.error('Error details:', error.message);
+      setError(`Failed to complete request: ${error.message}`);
     }
   };
 
@@ -206,22 +228,33 @@ export default function VolunteersDashboard() {
         body: JSON.stringify({ requestId }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to mark request as emergency');
+      // Try to parse response as JSON
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error('Error parsing response:', parseError);
+        throw new Error('Invalid response from server');
       }
 
-      setRequests((prevRequests) =>
-        prevRequests.map((req) =>
-          req.id === requestId
-            ? { ...req, status: 'emergency' }
-            : req
-        )
-      );
-      setSuccess('Emergency alert sent to government and nearby volunteers.');
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to report emergency');
+      }
+
+      // Check if operation was successful
+      if (data.success !== false) {
+        // Remove the request from the list (it's been deleted from database after alerts sent)
+        setRequests((prevRequests) =>
+          prevRequests.filter((req) => req.id !== requestId)
+        );
+        setSuccess('Emergency alert sent to government and nearby volunteers. Request removed from database.');
+      } else {
+        throw new Error(data.error || 'Emergency operation failed');
+      }
     } catch (error) {
-      console.error('Error marking request as emergency:', error);
-      setError(error.message);
+      console.error('Error reporting emergency:', error);
+      console.error('Error details:', error.message);
+      setError(`Failed to report emergency: ${error.message}`);
     }
   };
 

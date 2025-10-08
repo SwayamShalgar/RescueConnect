@@ -114,7 +114,7 @@ export default function DisasterAIPage() {
       setMessages([
         {
           sender: 'AI',
-          text: `🤖 **Disaster Response AI Assistant**\n\nHello! I'm your intelligent disaster response assistant powered by Google Gemini AI.\n\n**I can help you with:**\n• 📸 Analyze disaster images and provide expert guidance\n• 🔍 Identify disaster types and severity levels\n• 🚨 Provide immediate safety recommendations\n• 📋 Suggest emergency supplies and evacuation plans\n• 🆘 Guide you through emergency response procedures\n\n**How to use:**\n1. Upload or capture an image of the disaster situation\n2. Add any additional context (optional)\n3. Get instant AI-powered analysis and guidance\n\nStay safe! 🛡️`,
+          text: `🤖 **Disaster Response AI Assistant**\n\nHello! I'm your intelligent disaster response assistant.\n\n**I can help you with:**\n• 📸 Analyze disaster images and provide expert guidance\n• 🔍 Identify disaster types and severity levels\n• 🚨 Provide immediate safety recommendations\n• 📋 Suggest emergency supplies and evacuation plans\n• 🆘 Guide you through emergency response procedures\n\n**How to use:**\n1. Upload or capture an image of the disaster situation\n2. Add any additional context (optional)\n3. Get instant AI-powered analysis and guidance\n\nStay safe! 🛡️`,
           timestamp: new Date().toLocaleString()
         }
       ]);
@@ -466,7 +466,7 @@ export default function DisasterAIPage() {
 
           {/* Helper Text */}
           <p className="text-xs text-gray-500 mt-2 text-center">
-            💡 Tip: Upload clear images for better analysis • Max 10MB • Powered by Google Gemini AI
+            💡 Tip: Upload clear images for better analysis • Max 10MB • 
           </p>
         </div>
       </motion.div>
