@@ -399,7 +399,7 @@ export default function DisasterAIPage() {
             <input
               type="text"
               placeholder={selectedImage ? "Add context (optional)..." : "Ask a question or upload an image..."}
-              className="flex-1 px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+              className="flex-1 px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border-2 border-gray-300 text-black rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyPress={(e) => {
@@ -480,17 +480,17 @@ export default function DisasterAIPage() {
       >
         <div className="bg-white rounded-xl p-4 shadow-md text-center">
           <FiAlertTriangle className="text-red-600 mx-auto mb-2" size={24} />
-          <h3 className="font-semibold text-sm sm:text-base mb-1">Disaster Detection</h3>
-          <p className="text-xs text-gray-600">Identify disaster types instantly</p>
+          <h3 className="font-semibold text-black text-sm sm:text-base mb-1">Disaster Detection</h3>
+          <p className="text-xs  text-gray-600">Identify disaster types instantly</p>
         </div>
         <div className="bg-white rounded-xl p-4 shadow-md text-center">
           <FiCheckCircle className="text-green-600 mx-auto mb-2" size={24} />
-          <h3 className="font-semibold text-sm sm:text-base mb-1">Safety Guidance</h3>
+          <h3 className="font-semibold text-black  text-sm sm:text-base mb-1">Safety Guidance</h3>
           <p className="text-xs text-gray-600">Get actionable safety advice</p>
         </div>
         <div className="bg-white rounded-xl p-4 shadow-md text-center">
           <FiCamera className="text-blue-600 mx-auto mb-2" size={24} />
-          <h3 className="font-semibold text-sm sm:text-base mb-1">Visual Analysis</h3>
+          <h3 className="font-semibold text-black text-sm sm:text-base mb-1">Visual Analysis</h3>
           <p className="text-xs text-gray-600">AI-powered image recognition</p>
         </div>
       </motion.div>

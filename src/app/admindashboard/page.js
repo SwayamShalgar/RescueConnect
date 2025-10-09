@@ -286,7 +286,7 @@ export default function AdminDashboard() {
                 </thead>
                 <tbody>
                   {requests.map((request) => (
-                    <tr key={request.id} className="border-b hover:bg-gray-50">
+                    <tr key={request.id} className="border-b text-black hover:bg-gray-50">
                       <td className="py-3 px-4">{request.id}</td>
                       <td className="py-3 px-4">{request.name}</td>
                       <td className="py-3 px-4">{request.type}</td>
@@ -354,7 +354,7 @@ export default function AdminDashboard() {
                 </thead>
                 <tbody>
                   {volunteers.map((volunteer) => (
-                    <tr key={volunteer.id} className="border-b hover:bg-gray-50">
+                    <tr key={volunteer.id} className="border-b text-black hover:bg-gray-50">
                       <td className="py-3 px-4">{volunteer.id}</td>
                       <td className="py-3 px-4">{volunteer.name}</td>
                       <td className="py-3 px-4">{volunteer.contact}</td>

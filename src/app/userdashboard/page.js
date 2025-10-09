@@ -1016,7 +1016,7 @@ useEffect(() => {
         <div className="mb-5">
           <label className="block text-sm font-medium text-gray-700 mb-1">Emergency Type*</label>
           <select
-            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+            className="w-full p-3 border border-gray-300 text-black rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
             value={emergencyType}
             onChange={(e) => setEmergencyType(e.target.value)}
             required
@@ -1032,18 +1032,18 @@ useEffect(() => {
           <label className="block text-sm font-medium text-gray-700 mb-1">Additional Details (Optional)</label>
           <textarea
             placeholder="Provide more details about the emergency..."
-            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+            className="w-full p-3 border border-gray-300 text-black rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
             rows="3"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
         </div>
 
-        <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+        {/* <div className="mb-4 p-3 bg-blue-50 rounded-lg">
           <p className="text-sm text-blue-800">
             <strong>Note:</strong> This alert will be sent to all {volunteers.length} registered volunteers.
           </p>
-        </div>
+        </div> */}
 
         {error && (
           <motion.div
