@@ -348,8 +348,7 @@ export default function AdminDashboard() {
                     <th className="text-left py-3 px-4 font-semibold text-gray-700">Name</th>
                     <th className="text-left py-3 px-4 font-semibold text-gray-700">Contact</th>
                     <th className="text-left py-3 px-4 font-semibold text-gray-700">Skills</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Last Login</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Joined</th>
                     <th className="text-left py-3 px-4 font-semibold text-gray-700">Location</th>
                   </tr>
                 </thead>
@@ -361,16 +360,9 @@ export default function AdminDashboard() {
                       <td className="py-3 px-4">{volunteer.contact}</td>
                       <td className="py-3 px-4">{volunteer.skills || 'N/A'}</td>
                       <td className="py-3 px-4">
-                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                          volunteer.status === 'available' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
-                        }`}>
-                          {volunteer.status || 'Unknown'}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        {volunteer.last_login 
-                          ? new Date(volunteer.last_login).toLocaleString()
-                          : 'Never'}
+                        {volunteer.created_at 
+                          ? new Date(volunteer.created_at).toLocaleDateString()
+                          : 'N/A'}
                       </td>
                       <td className="py-3 px-4">
                         {volunteer.lat && volunteer.long ? (
@@ -416,7 +408,7 @@ export default function AdminDashboard() {
 
             {/* Active Volunteers */}
             <div className="bg-white rounded-xl shadow-lg p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Recently Active Volunteers</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Recently Joined Volunteers</h2>
               <div className="space-y-3">
                 {volunteers.slice(0, 5).map((volunteer) => (
                   <div key={volunteer.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
@@ -424,10 +416,8 @@ export default function AdminDashboard() {
                       <h3 className="font-semibold text-gray-900">{volunteer.name}</h3>
                       <p className="text-sm text-gray-600">{volunteer.contact}</p>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      volunteer.status === 'available' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
-                    }`}>
-                      {volunteer.status || 'Offline'}
+                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+                      {volunteer.skills || 'General'}
                     </span>
                   </div>
                 ))}

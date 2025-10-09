@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import pool from "../../../../../../lib/db";
+import pool from "../../../../../lib/db";
 import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this-in-production";
@@ -61,11 +61,9 @@ export async function GET(req) {
           skills,
           lat,
           long,
-          status,
-          last_login,
           created_at
         FROM volunteers
-        ORDER BY last_login DESC NULLS LAST
+        ORDER BY created_at DESC
       `;
       const volunteersResult = await client.query(volunteersQuery);
 
@@ -76,7 +74,6 @@ export async function GET(req) {
           (SELECT COUNT(*) FROM requests WHERE status = 'accepted') as accepted_requests,
           (SELECT COUNT(*) FROM requests WHERE status = 'emergency') as emergency_requests,
           (SELECT COUNT(*) FROM volunteers) as total_volunteers,
-          (SELECT COUNT(*) FROM volunteers WHERE status = 'available') as available_volunteers,
           (SELECT COUNT(*) FROM requests WHERE created_at > NOW() - INTERVAL '24 hours') as requests_today
       `;
       const statsResult = await client.query(statsQuery);
